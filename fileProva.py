@@ -1,5 +1,8 @@
 import random
 import math
+import matplotlib.pyplot as plt
+import numpy as np
+from matplotlib.colors import ListedColormap
 
 def generate_grid_map(rows=10, cols=10, num_obstacles=None, obstacle_ratio=0.2):
     """
@@ -82,6 +85,27 @@ def move(x, y, direction, grid):
         return (new_x, new_y, cost)
     return None
 
+def print_grid_matplotlib_full_obstacles(grid):
+    """
+    Visualizza la mappa a griglia usando Matplotlib, colorando di nero l'intera cella se è un ostacolo.
+    :param grid: Lista 2D che rappresenta la griglia (0: vuoto, 1: ostacolo).
+    """
+    np_grid = np.array(grid)
+    # Usa ListedColormap per forzare 0=bianco, 1=nero
+    cmap = ListedColormap(['white', 'black'])
+
+    plt.imshow(np_grid, cmap=cmap, interpolation='none', origin='upper')
+
+    # Griglia sottile per separare le celle
+    plt.grid(True, which='both', color='lightgray', linewidth=0.5)
+    plt.xticks(np.arange(0, np_grid.shape[1]), np.arange(0, np_grid.shape[1]))
+    plt.yticks(np.arange(0, np_grid.shape[0]), np.arange(0, np_grid.shape[0]))
+    plt.title("Visualizzazione GridMap (ostacoli neri)")
+    plt.xlabel("Colonna")
+    plt.ylabel("Riga")
+    plt.show()
+
+
 if __name__ == "__main__":
     try:
         rows = int(input("Inserisci il numero di righe della gridmap: "))
@@ -93,5 +117,7 @@ if __name__ == "__main__":
             num_obstacles = int(num_obstacles_input)
             grid = generate_grid_map(rows, cols, num_obstacles=num_obstacles)
         print_grid(grid)
+
+        print_grid_matplotlib_full_obstacles(grid)
     except Exception as e:
         print(f"Errore nell'input: {e}")
