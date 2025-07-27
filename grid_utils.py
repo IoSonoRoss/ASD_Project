@@ -85,38 +85,23 @@ def move(x, y, direction, grid):
         return (new_x, new_y, cost)
     return None
 
-def visualizza_gridmap_pcolormesh(grid, show_labels=True):
-    """
-    Visualizza una mappa a griglia usando Matplotlib.pcolormesh.
-    Questo metodo disegna le celle correttamente allineate alla griglia.
-
-    :param grid: Lista 2D o array NumPy che rappresenta la griglia (0: vuoto, 1: ostacolo).
-    :param show_labels: Se True, mostra titoli e etichette degli assi.
-    """
+def visualizza_gridmap_pcolormesh_corretto(grid):
     np_grid = np.array(grid)
     rows, cols = np_grid.shape
 
-    cmap = ListedColormap(['white', 'midnightblue'])
-
+    cmap = ListedColormap(['white', '#333399']) # Un blu facile da vedere
     fig, ax = plt.subplots()
-    ax.pcolormesh(np_grid, cmap=cmap, edgecolors='black', linewidth=0.5)
+
+    # La logica corretta per pcolormesh
+    x_coords = np.arange(cols + 1)
+    y_coords = np.arange(rows + 1)
+    ax.pcolormesh(x_coords, y_coords, np_grid, cmap=cmap, edgecolors='black', linewidth=1)
+
+    ax.set_title("Test di Isolamento: Dovresti vedere TUTTI i bordi")
     ax.set_aspect('equal')
     ax.invert_yaxis()
-    ax.tick_params(length=0)
+    ax.axis('off') # Rimuoviamo gli assi per chiarezza
 
-    if show_labels:
-        # Etichette da 1 a N invece che da 0
-        ax.set_xticks(np.arange(cols) + 0.5)
-        ax.set_yticks(np.arange(rows) + 0.5)
-        ax.set_xticklabels(np.arange(1, cols + 1))
-        ax.set_yticklabels(np.arange(1, rows + 1))
-        ax.set_title("Visualizzazione GridMap (ostacoli colorati)")
-        ax.set_xlabel("Colonna")
-        ax.set_ylabel("Riga")
-    else:
-        ax.axis('off')
-
-    plt.tight_layout()
     plt.show()
 
 def print_grid_matplotlib_full_obstacles(grid):
