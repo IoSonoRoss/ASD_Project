@@ -1,3 +1,6 @@
+# -*- mode: text -*-
+# Questo file contiene pseudocodice, non codice Python eseguibile
+
 generaGridMap(larghezza, altezza):
     """
     Crea una gridMap di dimensioni specificate.

@@ -85,6 +85,40 @@ def move(x, y, direction, grid):
         return (new_x, new_y, cost)
     return None
 
+def visualizza_gridmap_pcolormesh(grid, show_labels=True):
+    """
+    Visualizza una mappa a griglia usando Matplotlib.pcolormesh.
+    Questo metodo disegna le celle correttamente allineate alla griglia.
+
+    :param grid: Lista 2D o array NumPy che rappresenta la griglia (0: vuoto, 1: ostacolo).
+    :param show_labels: Se True, mostra titoli e etichette degli assi.
+    """
+    np_grid = np.array(grid)
+    rows, cols = np_grid.shape
+
+    cmap = ListedColormap(['white', 'midnightblue'])
+
+    fig, ax = plt.subplots()
+    ax.pcolormesh(np_grid, cmap=cmap, edgecolors='black', linewidth=0.5)
+    ax.set_aspect('equal')
+    ax.invert_yaxis()
+    ax.tick_params(length=0)
+
+    if show_labels:
+        # Etichette da 1 a N invece che da 0
+        ax.set_xticks(np.arange(cols) + 0.5)
+        ax.set_yticks(np.arange(rows) + 0.5)
+        ax.set_xticklabels(np.arange(1, cols + 1))
+        ax.set_yticklabels(np.arange(1, rows + 1))
+        ax.set_title("Visualizzazione GridMap (ostacoli colorati)")
+        ax.set_xlabel("Colonna")
+        ax.set_ylabel("Riga")
+    else:
+        ax.axis('off')
+
+    plt.tight_layout()
+    plt.show()
+
 def print_grid_matplotlib_full_obstacles(grid):
     """
     Visualizza la mappa a griglia usando Matplotlib, colorando di nero l'intera cella se è un ostacolo.
@@ -118,6 +152,7 @@ if __name__ == "__main__":
             grid = generate_grid_map(rows, cols, num_obstacles=num_obstacles)
         print_grid(grid)
 
-        print_grid_matplotlib_full_obstacles(grid)
+        # print_grid_matplotlib_full_obstacles(grid)  <-- Commentato per evitare conflitti con visualizza_gridmap_pcolormesh
+        visualizza_gridmap_pcolormesh(grid)
     except Exception as e:
         print(f"Errore nell'input: {e}")
