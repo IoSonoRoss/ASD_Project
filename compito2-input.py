@@ -6,47 +6,44 @@ import grid_utils
 
 def main():
 
-    grid_5x5 = [
-    [0, 0, 1, 1],
-    [1, 0, 0, 0],
-    [0, 1, 1, 0],
-    [0, 0, 0, 1]
-]
-
-    grid_grande = [
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0],
-    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
-    [1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0],
-    [0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-]
+    rows = int(input("Inserisci il numero di righe della gridmap: "))
+    cols = int(input("Inserisci il numero di colonne della gridmap: "))
+    num_obstacles_input = input("Inserisci il numero di ostacoli (premi invio per usare la percentuale predefinita): ")
+    if num_obstacles_input.strip() == "":
+        grid_test = grid_utils.generate_grid_map(rows, cols)
+    else:
+        num_obstacles = int(num_obstacles_input)
+        grid_test = grid_utils.generate_grid_map(rows, cols, num_obstacles=num_obstacles)
+    grid_utils.print_grid(grid_test)
     
-    grid_test = [
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0],
-        [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
-        [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0],
-        [0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    ]
-
     grid_utils.visualizza_gridmap_pcolormesh(grid_test)
 
     # Definisci origine e destinazione
     # O = (4, 6)
     # D = (8, 14) 
 
-    O = (8, 19)
-    D = (4, 6) 
+    # O = (8, 19)
+    # D = (4, 6) 
+
+    while True:
+        try:
+            O = tuple(map(int, input("Inserisci le coordinate dell'origine (riga,colonna): ").strip().split(',')))
+            if grid_test[O[0]][O[1]] == 1:
+                print("La cella di origine è un ostacolo. Riprova.")
+                continue
+            break
+        except (ValueError, IndexError):
+            print("Input non valido o coordinate fuori dalla griglia. Riprova.")
+
+    while True:
+        try:
+            D = tuple(map(int, input("Inserisci le coordinate della destinazione (riga,colonna): ").strip().split(',')))
+            if grid_test[D[0]][D[1]] == 1:
+                print("La cella di destinazione è un ostacolo. Riprova.")
+                continue
+            break
+        except (ValueError, IndexError):
+            print("Input non valido o coordinate fuori dalla griglia. Riprova.")
 
     print(f"Controllo valore: {grid_test[0][0]}")
 
