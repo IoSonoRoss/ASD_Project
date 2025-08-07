@@ -23,7 +23,8 @@ def main():
     # Definisci origine e destinazione
     O = (4, 6)
     # D = (8, 14) 
-    D = (7, 17)
+    # D = (7, 17)
+    D = (8, 19)
 
     print(f"Controllo valore: {grid_test[0][0]}")
 
@@ -70,6 +71,7 @@ def main():
         vis_grid[r, c] = 5  # Nuovo valore per la Frontiera
 
     vis_grid[O[0], O[1]] = 4  # Valore per l'Origine
+    vis_grid[D[0], D[1]] = 6  # Valore per la Destinazione
 
     # 1. Definisci i colori e le etichette per la legenda
     color_map = {
@@ -78,7 +80,8 @@ def main():
         2: '#90EE90',       
         3: '#FFD700',      
         4: '#FF0000',
-        5: '#006400'        
+        5: '#006400',
+        6: '#800080'
     }
     label_map = {
         0: 'Spazio Libero',
@@ -86,7 +89,8 @@ def main():
         2: 'Contesto di O',
         3: 'Complemento di O',
         4: 'Origine O',
-        5: 'Frontiera di O'
+        5: 'Frontiera di O',
+        6: 'Destinazione D'
     }
 
     # 2. Crea la Colormap di Matplotlib
@@ -102,6 +106,18 @@ def main():
 
     distanza_calcolata = grid_utils.calcola_distanza_libera(O, D)
     print(f"\nDistanza calcolata tra O e D: {distanza_calcolata}")
+
+    print(f"\n--- Esecuzione Procedura CAMMINOMIN da O={O} a D={D} ---")
+    lunghezza, sequenza_landmark = grid_utils.procedura_cammino_min(O, D, grid_test)
+
+    if lunghezza == float('inf'):
+        print("La destinazione D non è raggiungibile da O.")
+    else:
+        print(f"Lunghezza del cammino minimo: {lunghezza:.4f}")
+        print("Sequenza di landmark per ricostruire il percorso:")
+        for landmark, tipo in sequenza_landmark:
+            tipo_str = {0: "Origine", 1: "Via Cammino Libero T1", 2: "Via Cammino Libero T2", 3: "Via Cammino A*"}[tipo]
+            print(f"  - Landmark: {landmark}, Tipo: {tipo_str}")
 
 if __name__ == "__main__":
     main()

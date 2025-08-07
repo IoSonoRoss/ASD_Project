@@ -479,3 +479,141 @@ def calcola_frontiera(grid, origin, contesto, complemento):
             frontiera.append((r, c))
             
     return frontiera
+
+# ==============================================================================
+# SEZIONE 4: PROCEDURA CAMMINO MINIMO (TRADUZIONE PSEUDOCODICE)
+# ==============================================================================
+
+def cammino_min_reale(grid, start, end):
+    """
+    Trova il cammino minimo reale da 'start' a 'end' usando A*,
+    aggirando gli ostacoli.
+    Restituisce (lunghezza, percorso_in_coordinate).
+    """
+    num_rows, num_cols = len(grid), len(grid[0])
+    
+    neighbors = [((0, 1), 1),((0, -1), 1),((1, 0), 1),((-1, 0), 1),
+                 ((1, 1), math.sqrt(2)),((1, -1), math.sqrt(2)),
+                 ((-1, 1), math.sqrt(2)),((-1, -1), math.sqrt(2))]
+
+    def heuristic(a, b):
+        dr, dc = abs(a[0] - b[0]), abs(a[1] - b[1])
+        return math.sqrt(2) * min(dr, dc) + (max(dr, dc) - min(dr, dc))
+
+    open_set = [(heuristic(start, end), start)]
+    came_from = {}
+    g_score = { (r, c): float('inf') for r in range(num_rows) for c in range(num_cols) }
+    g_score[start] = 0
+    
+    while open_set:
+        _, current = heapq.heappop(open_set)
+        
+        if current == end:
+            path = []
+            while current in came_from:
+                path.append(current)
+                current = came_from[current]
+            path.append(start)
+            return g_score[end], path[::-1] # Restituisce costo e percorso
+
+        for (dr, dc), cost in neighbors:
+            neighbor = (current[0] + dr, current[1] + dc)
+            r, c = neighbor
+            
+            if not (0 <= r < num_rows and 0 <= c < num_cols) or grid[r][c] == 1:
+                continue
+            
+            # Corner check per A* (coerenza con is_path_free)
+            if dr != 0 and dc != 0: # Mossa diagonale
+                if grid[current[0]][neighbor[1]] == 1 and grid[neighbor[0]][current[1]] == 1:
+                    continue
+
+            tentative_g_score = g_score[current] + cost
+            if tentative_g_score < g_score[neighbor]:
+                came_from[neighbor] = current
+                g_score[neighbor] = tentative_g_score
+                f_score = tentative_g_score + heuristic(neighbor, end)
+                heapq.heappush(open_set, (f_score, neighbor))
+                
+    return float('inf'), [] # Nessun percorso trovato
+
+def compatta_sequenza(seq1, seq2):
+    """
+    Concatena due sequenze di landmark.
+    """
+    return seq1 + seq2
+
+def procedura_cammino_min(origin, destination, grid):
+    """
+    Implementazione della procedura CAMMINOMIN per trovare il percorso
+    minimo da O a D, restituendo la lunghezza e una sequenza di landmark.
+    
+    :param origin: Tupla (r, c) di partenza.
+    :param destination: Tupla (r, c) di destinazione.
+    :param grid: La mappa 2D.
+    :return: Tupla (lunghezza_minima, sequenza_landmark).
+    """
+    # Righe 3-5: Controlla se D è nel Contesto
+    contesto, complemento = calcola_contesto_e_complemento(grid, origin)
+    
+    if destination in contesto:
+        sequenza = [(origin, 0), (destination, 1)] # Tipo 1
+        return calcola_distanza_libera(origin, destination), sequenza
+
+    # Righe 6-8: Controlla se D è nel Complemento
+    if destination in complemento:
+        sequenza = [(origin, 0), (destination, 2)] # Tipo 2
+        return calcola_distanza_libera(origin, destination), sequenza
+
+    # Riga 9: Calcola la frontiera
+    frontiera = calcola_frontiera(grid, origin, contesto, complemento)
+
+    # Riga 10-11: Vicolo cieco
+    if not frontiera:
+        return float('inf'), []
+
+    # Righe 12-13: Inizializzazione
+    lunghezza_min = float('inf')
+    seq_min = []
+
+    # Riga 14: Cicla su ogni cella F della frontiera
+    for F in frontiera:
+        # Riga 15: Calcola la lunghezza da O a F (è un cammino libero)
+        lF = calcola_distanza_libera(origin, F)
+        
+        # Righe 16-17: Condizione di potatura (pruning)
+        if lF + calcola_distanza_libera(F, destination) >= lunghezza_min:
+             continue
+
+        # Riga 18: Trova il cammino minimo da F a D
+        # La griglia per questa ricerca considera la chiusura come ostacoli
+        grid_modificata = [row[:] for row in grid]
+        chiusura_di_O = set(contesto) | set(complemento) | {origin}
+        for r, c in chiusura_di_O:
+            if (r, c) != F:
+                grid_modificata[r][c] = 1
+
+        lFD, seqFD_coords = cammino_min_reale(grid_modificata, F, destination)
+
+        if lFD == float('inf'):
+            continue
+            
+        # Righe 19-22: Aggiorna il percorso migliore
+        lTot = lF + lFD
+        if lTot < lunghezza_min:
+            lunghezza_min = lTot
+            
+            # Determina il tipo di cammino libero da O a F
+            tipo_OF = 1 if F in contesto else 2
+            
+            # Crea la sequenza di landmark come da pseudocodice
+            seq_OF = [(origin, 0), (F, tipo_OF)]
+            
+            # Rappresentiamo il percorso A* come un unico landmark di destinazione
+            # con un tipo speciale (es. 3) per indicare un percorso complesso.
+            seq_FD = [(destination, 3)] 
+            
+            seq_min = compatta_sequenza(seq_OF, seq_FD)
+
+    # Riga 23: Ritorna il risultato finale
+    return lunghezza_min, seq_min
