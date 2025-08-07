@@ -435,3 +435,47 @@ def calcola_distanza_libera(origin, destination):
     distanza = math.sqrt(2) * delta_min + (delta_max - delta_min)
     
     return distanza
+
+def calcola_frontiera(grid, origin, contesto, complemento):
+    """
+    Calcola la frontiera di una cella O.
+
+    :param grid: La mappa 2D con ostacoli.
+    :param origin: Tupla (r, c) della cella di partenza O.
+    :param contesto: La lista di celle nel contesto di O.
+    :param complemento: La lista di celle nel complemento di O.
+    :return: Una lista di tuple (r, c) che rappresentano la frontiera.
+    """
+    # 1. Calcola la Chiusura di O. Usare un set è efficiente per i controlli.
+    chiusura_di_O = set(contesto) | set(complemento) | {origin}
+    
+    frontiera = []
+    
+    # Definiamo le 8 direzioni adiacenti
+    directions = [
+        (-1, 0), (1, 0), (0, -1), (0, 1),  # Rettilinee
+        (-1, -1), (-1, 1), (1, -1), (1, 1)  # Diagonali
+    ]
+    
+    # 2. Itera su ogni cella della chiusura
+    for r, c in chiusura_di_O:
+        is_frontier_cell = False
+        # 3. Controlla le sue 8 vicine
+        for dr, dc in directions:
+            nr, nc = r + dr, c + dc
+            
+            # 4. Verifica la condizione di frontiera per la vicina (nr, nc)
+            # a) È dentro i limiti?
+            if 0 <= nr < len(grid) and 0 <= nc < len(grid[0]):
+                neighbor_pos = (nr, nc)
+                # b) È attraversabile E non appartiene alla chiusura?
+                if grid[nr][nc] == 0 and neighbor_pos not in chiusura_di_O:
+                    # Abbiamo trovato una vicina che soddisfa la condizione.
+                    # Quindi (r, c) è una cella di frontiera.
+                    is_frontier_cell = True
+                    break # Passiamo alla prossima cella della chiusura
+        
+        if is_frontier_cell:
+            frontiera.append((r, c))
+            
+    return frontiera
