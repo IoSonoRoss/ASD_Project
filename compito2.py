@@ -42,11 +42,9 @@ def main():
     grid_utils.visualizza_gridmap_pcolormesh(grid_test)
 
     # Definisci origine e destinazione
-    # O = (4, 6)
+    O = (4, 6)
     # D = (8, 14) 
-
-    O = (8, 19)
-    D = (4, 6) 
+    D = (7, 17)
 
     print(f"Controllo valore: {grid_test[0][0]}")
 
@@ -113,6 +111,9 @@ def main():
     # 4. Chiama la funzione di visualizzazione, passando anche gli elementi della legenda
     titolo = f"Contesto e Complemento di O={O}"
     grid_utils.visualizza_risultato_finale(vis_grid, cmap, legend_patches, titolo)
+
+    distanza_calcolata = grid_utils.calcola_distanza_libera(O, D)
+    print(f"\nDistanza calcolata tra O e D: {distanza_calcolata}")
 
 if __name__ == "__main__":
     main()

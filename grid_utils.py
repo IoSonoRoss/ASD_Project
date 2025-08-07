@@ -405,3 +405,33 @@ def visualizza_risultato_finale(grid_da_mostrare, cmap, legend_elements, titolo)
     plt.tight_layout()
     
     plt.show()
+
+def calcola_distanza_libera(origin, destination):
+    """
+    Calcola la distanza libera (dlib) tra due celle O e D.
+    Questa è la lunghezza di un cammino libero, se esiste.
+    La formula è: sqrt(2)*delta_min + (delta_max - delta_min).
+
+    :param origin: Tupla (riga, colonna) della cella di partenza O.
+    :param destination: Tupla (riga, colonna) della cella di destinazione D.
+    :return: La distanza libera (un valore float).
+    """
+    # Estrai le coordinate
+    r_o, c_o = origin
+    r_d, c_d = destination
+
+    # 1. Calcola le differenze in valore assoluto (delta_x e delta_y)
+    #    Nota: delta_x corrisponde alla differenza tra le colonne (asse orizzontale)
+    #    e delta_y alla differenza tra le righe (asse verticale).
+    delta_x = abs(c_o - c_d)
+    delta_y = abs(r_o - r_d)
+
+    # 2. Trova delta_min e delta_max
+    delta_min = min(delta_x, delta_y)
+    delta_max = max(delta_x, delta_y)
+    
+    # 3. Applica la formula
+    #    sqrt(2) * (numero di passi diagonali) + 1 * (numero di passi rettilinei)
+    distanza = math.sqrt(2) * delta_min + (delta_max - delta_min)
+    
+    return distanza
