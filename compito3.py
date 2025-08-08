@@ -3,6 +3,7 @@ from matplotlib.colors import ListedColormap
 from matplotlib.patches import Patch
 import numpy as np
 import grid_utils
+import path_utils
 
 def main():
     grid_test = [
@@ -108,16 +109,34 @@ def main():
     print(f"\nDistanza calcolata tra O e D: {distanza_calcolata}")
 
     print(f"\n--- Esecuzione Procedura CAMMINOMIN da O={O} a D={D} ---")
-    lunghezza, sequenza_landmark = grid_utils.procedura_cammino_min(O, D, grid_test)
+    
+    lunghezza, sequenza_landmark = path_utils.procedura_cammino_min(O, D, grid_test)
 
     if lunghezza == float('inf'):
-        print("La destinazione D non è raggiungibile da O.")
+        print("\nRISULTATO: La destinazione D non è raggiungibile da O.")
     else:
-        print(f"Lunghezza del cammino minimo: {lunghezza:.4f}")
-        print("Sequenza di landmark per ricostruire il percorso:")
+        print(f"\nRISULTATO:")
+        print(f"  Lunghezza del cammino minimo: {lunghezza:.4f}")
+        print("  Sequenza di landmark per ricostruire il percorso:")
+        
+        tipo_map = {
+            0: "Origine", 1: "Via Cammino Libero T1", 
+            2: "Via Cammino Libero T2", 3: "Via Cammino A*"
+        }
         for landmark, tipo in sequenza_landmark:
-            tipo_str = {0: "Origine", 1: "Via Cammino Libero T1", 2: "Via Cammino Libero T2", 3: "Via Cammino A*"}[tipo]
-            print(f"  - Landmark: {landmark}, Tipo: {tipo_str}")
+            print(f"    - Landmark: {landmark}, Tipo: {tipo_map.get(tipo, 'Sconosciuto')}")
+
+    # print(f"\n--- Esecuzione Procedura CAMMINOMIN da O={O} a D={D} ---")
+    # lunghezza, sequenza_landmark = grid_utils.procedura_cammino_min(O, D, grid_test)
+    #
+    # if lunghezza == float('inf'):
+    #     print("La destinazione D non è raggiungibile da O.")
+    # else:
+    #     print(f"Lunghezza del cammino minimo: {lunghezza:.4f}")
+    #     print("Sequenza di landmark per ricostruire il percorso:")
+    #     for landmark, tipo in sequenza_landmark:
+    #         tipo_str = {0: "Origine", 1: "Via Cammino Libero T1", 2: "Via Cammino Libero T2", 3: "Via Cammino A*"}[tipo]
+    #         print(f"  - Landmark: {landmark}, Tipo: {tipo_str}")
 
 if __name__ == "__main__":
     main()
