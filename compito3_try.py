@@ -9,7 +9,7 @@ import path_utils_new
 
 # Variabile globale per la mappatura, condivisa durante la ricorsione
 mappa_etichette_globale = {}
-etichette_disponibili = list("ABCDEFGHIJKLMNOPQRSTUVWXYZΣΔΦΓ&*%$#@")
+etichette_disponibili = list("ABCEFGHIJKLMNPQRSTUVWXYZΣΔΦΓ&*%$#@")
 
 def procedura_cammino_min_wrapper(origin, destination, grid):
     """
@@ -86,8 +86,12 @@ def main():
     # --- ESECUZIONE DI CAMMINOMIN ---
     print(f"--- Esecuzione Procedura CAMMINOMIN da O={O} a D={D} ---")
     
-    path_utils_new.memoization_cache = {} # Pulisci la cache
-    lunghezza, sequenza_landmark = path_utils_new.procedura_cammino_min(O, D, grid_test)
+    # 1. Crea un gestore di etichette per questa esecuzione
+    label_manager = path_utils_new.LabelManager()
+    
+    # 2. Pulisci la cache e chiama la procedura, passando il gestore
+    path_utils_new.memoization_cache = {}
+    lunghezza, sequenza_landmark = path_utils_new.procedura_cammino_min(O, D, grid_test, label_manager)
 
     # --- STAMPA E VISUALIZZAZIONE DEL RISULTATO ---
     if lunghezza == float('inf'):
@@ -96,32 +100,19 @@ def main():
         print(f"\nRISULTATO:")
         print(f"  Lunghezza del cammino minimo: {lunghezza:.4f}")
         
-        # --- LOGICA DI MAPPATURA POST-ESECUZIONE (SUI RISULTATI) ---
-        # 1. Estrai tutti i landmark intermedi dalla soluzione
-        landmark_intermedi = [lm[0] for lm in sequenza_landmark[1:-1]]
+        # 3. Ottieni la mappa finale dal gestore
+        mappa_finale = label_manager.mappa_coord_etichetta
         
-        # 2. Assegna etichette UNIVOCHE a questi specifici landmark
-        mappa_soluzione = {}
-        # Lista di etichette senza 'O' e 'D'
-        etichette_disponibili = list("ABCEFGHIJKLMNPQRSTUVWXYZEΣΔΦΓ&*%$#@")
-        
-        for lm_coords in landmark_intermedi:
-            if lm_coords not in mappa_soluzione:
-                if etichette_disponibili:
-                    mappa_soluzione[lm_coords] = etichette_disponibili.pop(0)
-                else:
-                    mappa_soluzione[lm_coords] = str(lm_coords)
-        
-        # --- STAMPA DI DEBUG CORRETTA ---
-        print("\n--- DEBUG: Mappa Etichette della SOLUZIONE ---")
-        for coord, label in sorted(mappa_soluzione.items(), key=lambda item: item[1]):
+        # Stampa di debug
+        print("\n--- DEBUG: Mappa Etichette Globale Creata ---")
+        for coord, label in sorted(mappa_finale.items(), key=lambda item: item[1]):
             print(f"  '{label}' -> {coord}")
         print("---------------------------------------------")
 
-        # 3. Stampa la sequenza finale usando la mappa della soluzione
+        # 4. Stampa la sequenza di landmark usando la mappa
         output_str = "<"
         for i, (lm_coords, tipo) in enumerate(sequenza_landmark):
-            label = "O" if lm_coords == O else "D" if lm_coords == D else mappa_soluzione.get(lm_coords, str(lm_coords))
+            label = "O" if lm_coords == O else "D" if lm_coords == D else mappa_finale.get(lm_coords, str(lm_coords))
             output_str += f"({label}, {tipo}) "
         print(f"\n  Sequenza di landmark: {output_str.strip()}>")
 
