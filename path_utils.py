@@ -128,21 +128,34 @@ def calcola_contesto_e_complemento(grid, origin):
 
 def calcola_frontiera(grid, origin, contesto, complemento):
     """
-    [Versione Corretta] Calcola la frontiera di O e associa a ogni cella il suo tipo (1 o 2).
-    Restituisce una lista di tuple: [( (r, c), tipo )].
+    [Versione Definitiva] Calcola la frontiera di O e associa a ogni cella 
+    il suo tipo (1 per contesto, 2 per complemento).
+    Restituisce una lista di tuple nel formato: [ ((riga, colonna), tipo) ].
     """
     chiusura = set(contesto) | set(complemento) | {origin}
     contesto_set = set(contesto)
-    frontiera = []
-    directions = [(-1, 0), (1, 0), (0, -1), (0, 1), (-1, -1), (-1, 1), (1, -1), (1, 1)]
+    frontiera_con_tipo = []
+    
+    directions = [(-1, 0), (1, 0), (0, -1), (0, 1), 
+                  (-1, -1), (-1, 1), (1, -1), (1, 1)]
+    
     for r, c in chiusura:
         for dr, dc in directions:
             nr, nc = r + dr, c + dc
-            if 0 <= nr < len(grid) and 0 <= nc < len(grid[0]) and grid[nr][nc] == 0 and (nr, nc) not in chiusura:
-                tipo = 1 if (r, c) in contesto_set else 2
-                frontiera.append(((r, c), tipo))
-                break
-    return frontiera
+            
+            if 0 <= nr < len(grid) and 0 <= nc < len(grid[0]):
+                neighbor_pos = (nr, nc)
+                if grid[nr][nc] == 0 and neighbor_pos not in chiusura:
+                    
+                    # Determina il tipo della cella di frontiera (r,c)
+                    tipo = 1 if (r, c) in contesto_set else 2
+                    
+                    # Aggiungi la tupla nel formato corretto ((r,c), tipo)
+                    frontiera_con_tipo.append( ((r, c), tipo) )
+                    
+                    break 
+            
+    return frontiera_con_tipo
 
 # ==============================================================================
 # SEZIONE 4: PROCEDURA CAMMINO MINIMO (TRADUZIONE PSEUDOCODICE)
@@ -238,3 +251,47 @@ def procedura_cammino_min(origin, destination, grid):
 
     # Riga 23: Ritorna il risultato finale
     return lunghezza_min, seq_min
+
+def visualizza_percorso_completo(
+    vis_grid, cmap, legend_patches,
+    origin, sequenza_landmark, percorso_ricostruito, mappa_etichette):
+    """
+    [Versione Definitiva] Crea una visualizzazione completa e generica.
+    Disegna la griglia, il percorso, i landmark e le etichette della frontiera.
+    """
+    fig, ax = plt.subplots(figsize=(16, 9))
+    
+    # 1. Disegna la griglia di sfondo con i colori forniti
+    ax.pcolormesh(vis_grid, cmap=cmap, edgecolors='black', linewidth=0.5)
+    ax.set_aspect('equal'); ax.invert_yaxis(); ax.set_xticks([]); ax.set_yticks([])
+
+    # 2. Disegna il percorso ricostruito (linea ciano)
+    if percorso_ricostruito:
+        path_r, path_c = zip(*percorso_ricostruito)
+        ax.plot([c + 0.5 for c in path_c], [r + 0.5 for r in path_r], 
+                color='cyan', linewidth=2.5, zorder=10)
+
+    # 3. Disegna le etichette per TUTTE le celle di frontiera di O
+    #    (cerchi grigi con lettere bianche)
+    for lm_coords, label in mappa_etichette.items():
+        r, c = lm_coords
+        ax.add_patch(plt.Circle((c + 0.5, r + 0.5), radius=0.45, facecolor='#4682B4', alpha=0.9, zorder=11))
+        ax.text(c + 0.5, r + 0.5, label, color='white', ha='center', va='center', fontsize=9, weight='bold', zorder=12)
+
+    # 4. Evidenzia l'origine O (cerchio rosso vuoto)
+    r_o, c_o = origin
+    ax.add_patch(plt.Circle((c_o + 0.5, r_o + 0.5), radius=0.4, facecolor='red', edgecolor='black', zorder=13))
+    ax.text(c_o + 0.5, r_o + 0.5, 'O', color='white', ha='center', va='center', fontsize=9, weight='bold', zorder=14)
+    
+    # 5. Evidenzia la destinazione D (cerchio magenta)
+    if sequenza_landmark:
+        r_d, c_d = sequenza_landmark[-1][0]
+        ax.add_patch(plt.Circle((c_d + 0.5, r_d + 0.5), radius=0.45, facecolor='magenta', edgecolor='black', zorder=13))
+        ax.text(c_d + 0.5, r_d + 0.5, 'D', color='white', ha='center', va='center', fontsize=9, weight='bold', zorder=14)
+
+    # 6. Aggiungi la legenda
+    ax.legend(handles=legend_patches, bbox_to_anchor=(1.02, 1), loc='upper left')
+    
+    ax.set_title("Visualizzazione del Cammino Minimo tramite Landmark", fontsize=16)
+    plt.tight_layout()
+    plt.show()
