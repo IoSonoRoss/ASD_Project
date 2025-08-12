@@ -1,5 +1,3 @@
-# File: compito3_try.py (Versione Definitiva e Corretta)
-
 from matplotlib import pyplot as plt
 from matplotlib.colors import ListedColormap
 from matplotlib.patches import Patch
@@ -7,7 +5,6 @@ import numpy as np
 import grid_utils_new
 import path_utils_new
 
-# Variabile globale per la mappatura, condivisa durante la ricorsione
 mappa_etichette_globale = {}
 etichette_disponibili = list("ABCEFGHIJKLMNPQRSTUVWXYZΣΔΦΓ&*%$#@")
 
@@ -79,8 +76,14 @@ def main():
         [0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     ]
+
+    #grid_test = grid_utils_new.generate_grid_map(rows=100, cols=100, obstacle_ratio=0.2)
+
     O = (4, 6)
     D = (8, 19)
+
+    #O = (8, 19)
+    #D = (4, 6)
     print(f"Origine: {O}, Destinazione: {D}\n")
 
     # --- ESECUZIONE DI CAMMINOMIN ---

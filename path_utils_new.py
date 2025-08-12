@@ -70,82 +70,151 @@ def calcola_frontiera(grid, origin, contesto, complemento):
 
 # --- CLASSE ROBUSTA PER GESTIRE ETICHETTE DINAMICHE E UNIVOCHE ---
 class LabelManager:
+    """
+    Gestisce la creazione di etichette univoche e infinite per le coordinate.
+    Usa una logica simile alle colonne di Excel (A-Z, AA, AB...).
+    """
     def __init__(self):
-        # Escludiamo O e D dalle etichette disponibili
         self.mappa_coord_etichetta = {}
         self.prossimo_indice = 0
-        self.alfabeto = "ABCDEFGHIJKLMNPQRSTUVWXYZEΣΔΦΓ&*%$#@"
+        # Definiamo l'alfabeto di base da usare per la generazione.
+        # Escludiamo O e D per evitare ambiguità.
+        self.alfabeto = "ABCEFGHIJKLMNPQRSTUVWXYZEΣΔΦΓ&*%$#@"
 
     def _indice_a_etichetta(self, n):
-        """Converte un intero (0, 1, 2...) in un'etichetta (A, B, C..., AA, AB...)."""
-        if n < 0: return ""
+        """
+        Converte un indice numerico (0, 1, 2...) in un'etichetta univoca.
+        Esempio con alfabeto 'ABC': 0->A, 1->B, 2->C, 3->AA, 4->AB...
+        """
+        if n < 0:
+            return ""
+        
         base = len(self.alfabeto)
-        if n < base:
-            return self.alfabeto[n]
-        else:
-            return self._indice_a_etichetta(n // base - 1) + self.alfabeto[n % base]
+        etichetta = ""
+        
+        # Copia di n per non modificare l'originale nel ciclo
+        temp_n = n
+        
+        while True:
+            # Calcola l'indice del carattere per la posizione corrente
+            remainder = temp_n % base
+            # Aggiungi il carattere all'inizio della stringa
+            etichetta = self.alfabeto[remainder] + etichetta
+            
+            # Aggiorna l'indice per la prossima "cifra" a sinistra
+            temp_n = temp_n // base - 1
+            
+            # Se abbiamo processato tutte le "cifre", usciamo
+            if temp_n < 0:
+                break
+                
+        return etichetta
 
     def get_label(self, coords):
-        """Restituisce l'etichetta per una coordinata, creandone una nuova se non esiste."""
+        """
+        Restituisce l'etichetta per una coordinata, creandone una nuova se non esiste.
+        Questo è l'unico metodo pubblico da chiamare dall'esterno.
+        """
         if coords not in self.mappa_coord_etichetta:
+            # Genera una nuova etichetta basata sull'indice corrente
             nuova_etichetta = self._indice_a_etichetta(self.prossimo_indice)
+            
+            # Salva l'associazione e incrementa l'indice per la prossima etichetta
             self.mappa_coord_etichetta[coords] = nuova_etichetta
             self.prossimo_indice += 1
+            
         return self.mappa_coord_etichetta[coords]
 
 # --- PROCEDURA CAMMINOMIN CHE USA IL LABELMANAGER ---
 memoization_cache = {}
 
-def procedura_cammino_min(origin, destination, grid, label_manager, ostacoli_proibiti=frozenset()):
+def procedura_cammino_min(
+    origin, destination, grid, label_manager, 
+    ostacoli_proibiti=frozenset(), depth=0):
     """
-    [Versione Definitiva con LabelManager] Implementazione RICORSIVA.
+    [Versione con Logging] Implementazione RICORSIVA che stampa l'albero di esplorazione.
     """
+    # --- LOGGING: Inizio chiamata ---
+    indent = "  " * depth
+    origin_label = "O" if depth == 0 else label_manager.get_label(origin)
+    print(f"{indent}--> Chiamata CAMMINOMIN(O={origin_label}, D={destination})")
+
     cache_key = (origin, destination, ostacoli_proibiti)
-    if cache_key in memoization_cache: return memoization_cache[cache_key]
-    if origin == destination: return 0, [(origin, 1)]
+    if cache_key in memoization_cache:
+        lunghezza, _ = memoization_cache[cache_key]
+        status = "Infinito" if lunghezza == float('inf') else f"{lunghezza:.2f}"
+        print(f"{indent}<-- Trovato in cache! Risultato: {status}")
+        return memoization_cache[cache_key]
+
+    if origin == destination:
+        print(f"{indent}<-- Caso Base: Origine == Destinazione. Ritorno (0, [destinazione])")
+        return 0, [(origin, 1)]
 
     grid_temp = [row[:] for row in grid]
     for r, c in ostacoli_proibiti:
-        if 0 <= r < len(grid_temp) and 0 <= c < len(grid_temp[0]): grid_temp[r][c] = 1
+        if 0 <= r < len(grid_temp) and 0 <= c < len(grid_temp[0]):
+            grid_temp[r][c] = 1
 
     contesto, complemento = calcola_contesto_e_complemento(grid_temp, origin)
     
     if destination in set(contesto):
-        result = calcola_distanza_libera(origin, destination), [(origin, 0), (destination, 1)]
-        memoization_cache[cache_key] = result
-        return result
+        lunghezza = calcola_distanza_libera(origin, destination)
+        print(f"{indent}<-- Caso Base: D nel Contesto di {origin_label}. Ritorno ({lunghezza:.2f}, ...)")
+        return lunghezza, [(origin, 0), (destination, 1)]
     if destination in set(complemento):
-        result = calcola_distanza_libera(origin, destination), [(origin, 0), (destination, 2)]
-        memoization_cache[cache_key] = result
-        return result
+        lunghezza = calcola_distanza_libera(origin, destination)
+        print(f"{indent}<-- Caso Base: D nel Complemento di {origin_label}. Ritorno ({lunghezza:.2f}, ...)")
+        return lunghezza, [(origin, 0), (destination, 2)]
 
     frontiera_con_tipo = calcola_frontiera(grid_temp, origin, contesto, complemento)
     
-    # Assegna etichette a nuove celle di frontiera usando il manager
     for (coords, _) in frontiera_con_tipo:
         label_manager.get_label(coords)
 
-    if not frontiera_con_tipo: return float('inf'), []
+    if not frontiera_con_tipo:
+        print(f"{indent}<-- Vicolo Cieco: Frontiera di {origin_label} è vuota. Ritorno (inf, [])")
+        return float('inf'), []
 
     lunghezza_min, seq_min = float('inf'), []
     frontiera_con_tipo.sort(key=lambda x: calcola_distanza_libera(x[0], destination))
+    
+    print(f"{indent}    Frontiera di {origin_label} trovata con {len(frontiera_con_tipo)} celle. Inizio ciclo for...")
 
     for F, tipo_F in frontiera_con_tipo:
+        F_label = label_manager.get_label(F)
         lOF = calcola_distanza_libera(origin, F)
-        if lOF + calcola_distanza_libera(F, destination) >= lunghezza_min: continue
+        
+        # Pruning
+        stima_costo = lOF + calcola_distanza_libera(F, destination)
+        if stima_costo >= lunghezza_min:
+            print(f"{indent}    - Scarto F={F_label}: stima {stima_costo:.2f} >= min_attuale {lunghezza_min:.2f}")
+            continue
+        
+        print(f"{indent}    - Provo F={F_label} (tipo {tipo_F}), costo O->F: {lOF:.2f}")
 
         chiusura_attuale = set(contesto) | set(complemento) | {origin}
         nuovi_ostacoli_proibiti = ostacoli_proibiti.union(chiusura_attuale)
         
-        lFD, seqFD = procedura_cammino_min(F, destination, grid, label_manager, frozenset(nuovi_ostacoli_proibiti))
+        # Chiamata Ricorsiva
+        lFD, seqFD = procedura_cammino_min(
+            F, destination, grid, label_manager, 
+            frozenset(nuovi_ostacoli_proibiti), depth + 1
+        )
         
-        if lFD == float('inf'): continue
+        if lFD == float('inf'):
+            print(f"{indent}      Risultato da F={F_label}: Vicolo cieco.")
+            continue
         
         lTot = lOF + lFD
+        print(f"{indent}      Risultato da F={F_label}: Trovato percorso di lunghezza totale {lTot:.2f}")
         if lTot < lunghezza_min:
+            print(f"{indent}      !!! NUOVO MINIMO TROVATO: {lTot:.2f} (precedente: {lunghezza_min:.2f}) !!!")
             lunghezza_min = lTot
             seq_min = compatta_sequenza([(origin, 0), (F, tipo_F)], seqFD)
             
+    status_finale = "Infinito" if lunghezza_min == float('inf') else f"{lunghezza_min:.2f}"
+    print(f"{indent}<-- Fine esplorazione per {origin_label}. Miglior risultato: {status_finale}")
+    
     memoization_cache[cache_key] = (lunghezza_min, seq_min)
     return lunghezza_min, seq_min
 
