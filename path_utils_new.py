@@ -91,56 +91,83 @@ class LabelManager:
 # --- PROCEDURA CAMMINOMIN CHE USA IL LABELMANAGER ---
 memoization_cache = {}
 
-def procedura_cammino_min(origin, destination, grid, label_manager, ostacoli_proibiti=frozenset()):
+def procedura_cammino_min(
+    origin, destination, grid, label_manager, 
+    ostacoli_proibiti=frozenset(), depth=0):
     """
-    [Versione Definitiva con LabelManager] Implementazione RICORSIVA.
+    [Versione con Logging Semplificato] Implementazione RICORSIVA.
     """
-    cache_key = (origin, destination, ostacoli_proibiti)
-    if cache_key in memoization_cache: return memoization_cache[cache_key]
-    if origin == destination: return 0, [(origin, 1)]
+    indent = "  " * depth
+    origin_label = "O" if depth == 0 else label_manager.get_label(origin)
+    # Ora la destinazione viene sempre trattata come un landmark qualsiasi
+    dest_label = label_manager.get_label(destination)
+    
+    print(f"{indent}--> Chiamata CAMMINOMIN(O={origin_label}, D={dest_label})")
 
+    # ... (il resto del codice della funzione rimane IDENTICO a quello che ti ho fornito prima) ...
+    # ...
+    # (Tutta la logica di cache, casi base, ciclo for, chiamate ricorsive, etc.)
+    # ...
+    
+    cache_key = (origin, destination, ostacoli_proibiti)
+    if cache_key in memoization_cache:
+        lunghezza, _ = memoization_cache[cache_key]
+        status = "Infinito" if lunghezza == float('inf') else f"{lunghezza:.2f}"
+        print(f"{indent}<-- Trovato in cache! Risultato: {status}")
+        return memoization_cache[cache_key]
+    if origin == destination:
+        print(f"{indent}<-- Caso Base: Origine == Destinazione. Ritorno (0, [destinazione])")
+        return 0, [(origin, 1)]
     grid_temp = [row[:] for row in grid]
     for r, c in ostacoli_proibiti:
-        if 0 <= r < len(grid_temp) and 0 <= c < len(grid_temp[0]): grid_temp[r][c] = 1
-
+        if 0 <= r < len(grid_temp) and 0 <= c < len(grid_temp[0]):
+            grid_temp[r][c] = 1
     contesto, complemento = calcola_contesto_e_complemento(grid_temp, origin)
-    
     if destination in set(contesto):
-        result = calcola_distanza_libera(origin, destination), [(origin, 0), (destination, 1)]
+        lunghezza = calcola_distanza_libera(origin, destination)
+        print(f"{indent}<-- Caso Base: {dest_label} nel Contesto di {origin_label}. Ritorno ({lunghezza:.2f}, ...)")
+        result = lunghezza, [(origin, 0), (destination, 1)]
         memoization_cache[cache_key] = result
         return result
     if destination in set(complemento):
-        result = calcola_distanza_libera(origin, destination), [(origin, 0), (destination, 2)]
+        lunghezza = calcola_distanza_libera(origin, destination)
+        print(f"{indent}<-- Caso Base: {dest_label} nel Complemento di {origin_label}. Ritorno ({lunghezza:.2f}, ...)")
+        result = lunghezza, [(origin, 0), (destination, 2)]
         memoization_cache[cache_key] = result
         return result
-
     frontiera_con_tipo = calcola_frontiera(grid_temp, origin, contesto, complemento)
-    
-    # Assegna etichette a nuove celle di frontiera usando il manager
     for (coords, _) in frontiera_con_tipo:
         label_manager.get_label(coords)
-
-    if not frontiera_con_tipo: return float('inf'), []
-
+    if not frontiera_con_tipo:
+        print(f"{indent}<-- Vicolo Cieco: Frontiera di {origin_label} è vuota. Ritorno (inf, [])")
+        return float('inf'), []
     lunghezza_min, seq_min = float('inf'), []
     frontiera_con_tipo.sort(key=lambda x: calcola_distanza_libera(x[0], destination))
-
+    print(f"{indent}    Frontiera di {origin_label} trovata con {len(frontiera_con_tipo)} celle. Inizio ciclo for...")
     for F, tipo_F in frontiera_con_tipo:
+        F_label = label_manager.get_label(F)
         lOF = calcola_distanza_libera(origin, F)
-        if lOF + calcola_distanza_libera(F, destination) >= lunghezza_min: continue
-
+        stima_costo = lOF + calcola_distanza_libera(F, destination)
+        if stima_costo >= lunghezza_min:
+            print(f"{indent}    - Scarto F={F_label}: stima {stima_costo:.2f} >= min_attuale {lunghezza_min:.2f}")
+            continue
+        print(f"{indent}    - Provo F={F_label} (tipo {tipo_F}), costo O->F: {lOF:.2f}")
         chiusura_attuale = set(contesto) | set(complemento) | {origin}
         nuovi_ostacoli_proibiti = ostacoli_proibiti.union(chiusura_attuale)
-        
-        # Passa lo STESSO label_manager alla chiamata ricorsiva
-        lFD, seqFD = procedura_cammino_min(F, destination, grid, label_manager, frozenset(nuovi_ostacoli_proibiti))
-        
-        if lFD == float('inf'): continue
-        
+        lFD, seqFD = procedura_cammino_min(
+            F, destination, grid, label_manager, 
+            frozenset(nuovi_ostacoli_proibiti), depth + 1
+        )
+        if lFD == float('inf'):
+            print(f"{indent}      Risultato da F={F_label}: Vicolo cieco.")
+            continue
         lTot = lOF + lFD
+        print(f"{indent}      Risultato da F={F_label}: Trovato percorso di lunghezza totale {lTot:.2f}")
         if lTot < lunghezza_min:
+            print(f"{indent}      !!! NUOVO MINIMO TROVATO: {lTot:.2f} (precedente: {lunghezza_min:.2f}) !!!")
             lunghezza_min = lTot
             seq_min = compatta_sequenza([(origin, 0), (F, tipo_F)], seqFD)
-            
+    status_finale = "Infinito" if lunghezza_min == float('inf') else f"{lunghezza_min:.2f}"
+    print(f"{indent}<-- Fine esplorazione per {origin_label}. Miglior risultato: {status_finale}")
     memoization_cache[cache_key] = (lunghezza_min, seq_min)
     return lunghezza_min, seq_min
