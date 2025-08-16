@@ -1,5 +1,3 @@
-# File: path_utils.py
-
 import math
 import heapq
 import numpy as np
@@ -20,6 +18,41 @@ def is_path_free(grid, path):
         if not (0 <= r < len(grid) and 0 <= c < len(grid[0])): return False
         if grid[r][c] == 1: return False
     return True
+
+def find_free_paths(grid, origin, destination):
+    """
+    Trova i cammini liberi tra un'origine e una destinazione.
+    
+    :return: Una lista di tuple. Ogni tupla è nella forma (tipo, percorso),
+             dove tipo è una stringa ("Tipo 1" o "Tipo 2") e percorso è
+             una lista di coordinate.
+    """
+    found_paths = [] # Nome cambiato per chiarezza
+    
+    if grid[destination[0]][destination[1]] == 1:
+        return []
+
+    # 1. Controlla il percorso di TIPO 1 (obliquo -> rettilineo)
+    path_type1 = generate_path_coordinates(origin, destination, diagonal_first=True)
+    if is_path_free(grid, path_type1):
+        # Aggiungi una tupla con il tipo e il percorso
+        found_paths.append(("Tipo 1", path_type1))
+        
+    # 2. Controlla il percorso di TIPO 2 (rettilineo -> obliquo)
+    path_type2 = generate_path_coordinates(origin, destination, diagonal_first=False)
+    
+    # Se il percorso è una linea retta, Tipo 1 e Tipo 2 sono uguali.
+    # In base alla regola, un percorso solo obliquo o solo rettilineo
+    # è classificato come TIPO 1. Quindi non dobbiamo aggiungere un duplicato.
+    if path_type1 == path_type2:
+        return found_paths # Restituisce solo il risultato del Tipo 1
+    
+    # Se i percorsi sono diversi, controlla se il Tipo 2 è libero
+    if is_path_free(grid, path_type2):
+        # Aggiungi una tupla con il tipo e il percorso
+        found_paths.append(("Tipo 2", path_type2))
+        
+    return found_paths
 
 def generate_path_coordinates(origin, destination, diagonal_first):
     path = [origin]
@@ -200,3 +233,104 @@ def procedura_cammino_min(origin, destination, grid, label_manager, ostacoli_pro
     
     memoization_cache[cache_key] = (lunghezza_min, seq_min)
     return lunghezza_min, seq_min
+
+# --- vedere se servono o meno ---
+
+def generate_ideal_minimum_path(origin, destination):
+    """
+    Genera le coordinate del "cammino minimo ideale" (il percorso giallo),
+    che è un percorso di Tipo 1 (prima tutte le mosse diagonali, poi quelle rettilinee).
+    Questa funzione è essenzialmente la stessa di 'generate_path_coordinates'
+    con diagonal_first=True.
+
+    :param origin: Tupla (r, c) di partenza.
+    :param destination: Tupla (r, c) di arrivo.
+    :return: Lista di tuple (r, c) che rappresenta il cammino ideale.
+    """
+    path = [origin]
+    r_curr, c_curr = origin
+    r_dest, c_dest = destination
+
+    delta_r = r_dest - r_curr
+    delta_c = c_dest - c_curr
+
+    # Calcola il numero di passi diagonali e rettilinei necessari
+    num_diagonal_steps = min(abs(delta_r), abs(delta_c))
+    num_rectilinear_steps = abs(abs(delta_r) - abs(delta_c))
+    
+    # Determina la direzione dei passi (-1, 0, o 1)
+    step_r = int(np.sign(delta_r))
+    step_c = int(np.sign(delta_c))
+    
+    # Determina la direzione del tratto rettilineo
+    if abs(delta_r) > abs(delta_c):
+        rect_step_r, rect_step_c = step_r, 0 # Movimento verticale
+    else:
+        rect_step_r, rect_step_c = 0, step_c # Movimento orizzontale
+
+    # 1. Esegui i passi diagonali
+    for _ in range(num_diagonal_steps):
+        r_curr += step_r
+        c_curr += step_c
+        path.append((r_curr, c_curr))
+
+    # 2. Esegui i passi rettilinei
+    for _ in range(num_rectilinear_steps):
+        r_curr += rect_step_r
+        c_curr += rect_step_c
+        path.append((r_curr, c_curr))
+        
+    return path
+
+def cammino_min_reale(grid, start, end):
+    """
+    Trova il cammino minimo reale da 'start' a 'end' usando A*,
+    aggirando gli ostacoli.
+    Restituisce (lunghezza, percorso_in_coordinate).
+    """
+    num_rows, num_cols = len(grid), len(grid[0])
+    
+    neighbors = [((0, 1), 1),((0, -1), 1),((1, 0), 1),((-1, 0), 1),
+                 ((1, 1), math.sqrt(2)),((1, -1), math.sqrt(2)),
+                 ((-1, 1), math.sqrt(2)),((-1, -1), math.sqrt(2))]
+
+    def heuristic(a, b):
+        dr, dc = abs(a[0] - b[0]), abs(a[1] - b[1])
+        return math.sqrt(2) * min(dr, dc) + (max(dr, dc) - min(dr, dc))
+
+    open_set = [(heuristic(start, end), start)]
+    came_from = {}
+    g_score = { (r, c): float('inf') for r in range(num_rows) for c in range(num_cols) }
+    g_score[start] = 0
+    
+    while open_set:
+        _, current = heapq.heappop(open_set)
+        
+        if current == end:
+            path = []
+            while current in came_from:
+                path.append(current)
+                current = came_from[current]
+            path.append(start)
+            return g_score[end], path[::-1] # Restituisce costo e percorso
+
+        for (dr, dc), cost in neighbors:
+            neighbor = (current[0] + dr, current[1] + dc)
+            r, c = neighbor
+            
+            if not (0 <= r < num_rows and 0 <= c < num_cols) or grid[r][c] == 1:
+                continue
+            
+            # Corner check per A* (coerenza con is_path_free)
+            if dr != 0 and dc != 0: # Mossa diagonale
+                if grid[current[0]][neighbor[1]] == 1 and grid[neighbor[0]][current[1]] == 1:
+                    continue
+
+            tentative_g_score = g_score[current] + cost
+            if tentative_g_score < g_score[neighbor]:
+                came_from[neighbor] = current
+                g_score[neighbor] = tentative_g_score
+                f_score = tentative_g_score + heuristic(neighbor, end)
+                heapq.heappush(open_set, (f_score, neighbor))
+                
+    return float('inf'), [] # Nessun percorso trovato
