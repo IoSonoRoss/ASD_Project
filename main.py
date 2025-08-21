@@ -2,8 +2,10 @@ from matplotlib import pyplot as plt
 from matplotlib.colors import ListedColormap
 from matplotlib.patches import Patch
 import numpy as np
-import grid_utils_new as grid_utils
-import path_utils_new as path_utils
+import visualization
+import path_logic
+import closure_logic
+import grid_generator
 import solver
 
 def main():
@@ -12,13 +14,13 @@ def main():
     num_obstacles_input = input("Inserisci il numero di ostacoli (premi invio per usare il 20%): ")
     
     if num_obstacles_input.strip() == "":
-        grid_test = grid_utils.generate_grid_map(rows, cols, obstacle_ratio=0.2)
+        grid_test = grid_generator.generate_grid_map(rows, cols, obstacle_ratio=0.2)
     else:
         num_obstacles = int(num_obstacles_input)
-        grid_test = grid_utils.generate_grid_map(rows, cols, num_obstacles=num_obstacles)
-    
-    grid_utils.print_grid(grid_test)
-    grid_utils.visualizza_gridmap_pcolormesh(grid_test)
+        grid_test = grid_generator.generate_grid_map(rows, cols, num_obstacles=num_obstacles)
+
+    visualization.print_grid(grid_test)
+    visualization.visualizza_gridmap_pcolormesh(grid_test)
 
     # Input Origine e Destinazione con validazione
     while True:
@@ -47,8 +49,8 @@ def main():
 
     # --- 2. CALCOLI PRELIMINARI E VISUALIZZAZIONE CHIUSURA ---
     print(f"Calcolo della chiusura e frontiera per l'origine O={O}...")
-    contesto, complemento = path_utils.calcola_contesto_e_complemento(grid_test, O)
-    frontiera_con_tipo = path_utils.calcola_frontiera(grid_test, O, contesto, complemento)
+    contesto, complemento = closure_logic.calcola_contesto_e_complemento(grid_test, O)
+    frontiera_con_tipo = closure_logic.calcola_frontiera(grid_test, O, contesto, complemento)
     print(f"  Trovate {len(contesto)} celle nel Contesto, {len(complemento)} nel Complemento, {len(frontiera_con_tipo)} di Frontiera.")
 
     # --- 3. ESECUZIONE DEL SOLVER E STAMPA RISULTATO ---
