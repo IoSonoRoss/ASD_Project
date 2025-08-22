@@ -8,29 +8,34 @@ import path_logic
 D_globale = None
 memoization_cache = {}
 
-# La firma della funzione ora include 'stats_tracker'
 def procedura_cammino_min(
     origin, destination, grid, label_manager, stats_tracker,
     ostacoli_proibiti=frozenset(), depth=0):
     """
-    [Versione con Logging e StatsTracker] 
-    Implementazione RICORSIVA che raccoglie dati per la sperimentazione.
+    [Versione Corretta con Chiave di Cache Robusta e Logging] 
     """
-    # --- STATS: Traccia la profondità massima della ricorsione ---
-    stats_tracker.track_depth(depth)
-
-    # Il logging di debug rimane per l'analisi manuale
+    # --- LOGGING: Inizio chiamata ---
     indent = "  " * depth
     origin_label = "O" if depth == 0 else label_manager.get_label(origin)
     dest_label = "D" if destination == D_globale else label_manager.get_label(destination)
     print(f"{indent}--> Chiamata CAMMINOMIN(O={origin_label}, D={dest_label}) con {len(ostacoli_proibiti)} ostacoli proibiti")
 
-    cache_key = (origin, destination, ostacoli_proibiti)
+    # --- STATS: Traccia la profondità ---
+    stats_tracker.track_depth(depth)
+
+    # --- CORREZIONE CRITICA: Creazione di una chiave di cache canonica e ordinata ---
+    ostacoli_ordinati_tuple = tuple(sorted(list(ostacoli_proibiti)))
+    cache_key = (origin, destination, ostacoli_ordinati_tuple)
+    # --- FINE CORREZIONE ---
+
     if cache_key in memoization_cache:
-        # ... (logica cache)
+        lunghezza, _ = memoization_cache[cache_key]
+        status = "Infinito" if lunghezza == float('inf') else f"{lunghezza:.2f}"
+        print(f"{indent}<-- Trovato in cache! Risultato: {status}")
         return memoization_cache[cache_key]
 
     if origin == destination:
+        print(f"{indent}<-- Caso Base: Origine == Destinazione. Ritorno (0, [destinazione])")
         return 0, [(origin, 1)]
     
     grid_temp = [row[:] for row in grid]
@@ -41,19 +46,29 @@ def procedura_cammino_min(
     contesto, complemento = closure_logic.calcola_contesto_e_complemento(grid_temp, origin)
     
     if destination in set(contesto):
-        return path_logic.calcola_distanza_libera(origin, destination), [(origin, 0), (destination, 1)]
+        lunghezza = path_logic.calcola_distanza_libera(origin, destination)
+        print(f"{indent}<-- Caso Base: {dest_label} nel Contesto di {origin_label}. Ritorno ({lunghezza:.2f}, ...)")
+        result = lunghezza, [(origin, 0), (destination, 1)]
+        memoization_cache[cache_key] = result
+        return result
     if destination in set(complemento):
-        return path_logic.calcola_distanza_libera(origin, destination), [(origin, 0), (destination, 2)]
+        lunghezza = path_logic.calcola_distanza_libera(origin, destination)
+        print(f"{indent}<-- Caso Base: {dest_label} nel Complemento di {origin_label}. Ritorno ({lunghezza:.2f}, ...)")
+        result = lunghezza, [(origin, 0), (destination, 2)]
+        memoization_cache[cache_key] = result
+        return result
 
     frontiera_con_tipo = closure_logic.calcola_frontiera(grid_temp, origin, contesto, complemento)
     
-    # --- STATS: Aggiungi le nuove celle di frontiera scoperte al tracker ---
+    # --- STATS: Aggiungi frontiere ---
     stats_tracker.add_frontier_cells(frontiera_con_tipo)
     
     for (coords, _) in frontiera_con_tipo:
         label_manager.get_label(coords)
 
     if not frontiera_con_tipo:
+        print(f"{indent}<-- Vicolo Cieco: Frontiera di {origin_label} è vuota. Ritorno (inf, [])")
+        memoization_cache[cache_key] = (float('inf'), [])
         return float('inf'), []
 
     lunghezza_min, seq_min = float('inf'), []
@@ -66,12 +81,12 @@ def procedura_cammino_min(
         costo_stimato_totale = lOF + path_logic.calcola_distanza_libera(F, destination)
         
         if costo_stimato_totale >= lunghezza_min:
-            # --- STATS: Incrementa il contatore del pruning ---
+            # --- STATS: Incrementa pruning ---
             stats_tracker.increment_pruning_count()
-            print(f"{indent}    - Scarto F={label_manager.get_label(F)}: stima ...") # La stampa rimane
+            # ... (stampa di debug) ...
             continue
         
-        print(f"{indent}    - Provo F={label_manager.get_label(F)} ...")
+        # ... (stampa di debug) ...
 
         chiusura_attuale = set(contesto) | set(complemento) | {origin}
         nuovi_ostacoli_proibiti = ostacoli_proibiti.union(chiusura_attuale)
@@ -90,5 +105,7 @@ def procedura_cammino_min(
             lunghezza_min = lTot
             seq_min = path_logic.compatta_sequenza([(origin, 0), (F, tipo_F)], seqFD)
             
+    # ... (stampa di debug finale) ...
+    
     memoization_cache[cache_key] = (lunghezza_min, seq_min)
     return lunghezza_min, seq_min
