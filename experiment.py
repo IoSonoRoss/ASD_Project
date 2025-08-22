@@ -60,7 +60,7 @@ def main():
     # Esperimento 1: Variazione della Dimensione della Griglia
     scenari_dimensione = [
         # {"id": "Dim-10x10", "rows": 10, "cols": 10, "obstacle_ratio": 0.2, "num_runs": 5},
-        {"id": "Dim-20x20", "rows": 20, "cols": 20, "obstacle_ratio": 0.2, "num_runs": 1},
+        {"id": "Dim-20x20", "rows": 20, "cols": 20, "obstacle_ratio": 0.2, "num_runs": 2},
         #{"id": "Dim-30x30", "rows": 30, "cols": 30, "obstacle_ratio": 0.2, "num_runs": 3},
         #{"id": "Dim-40x40", "rows": 40, "cols": 40, "obstacle_ratio": 0.2, "num_runs": 2},
         # {"id": "Dim-50x50", "rows": 50, "cols": 50, "obstacle_ratio": 0.2, "num_runs": 1}, # Può essere lento
