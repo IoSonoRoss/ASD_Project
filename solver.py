@@ -30,7 +30,7 @@ class PathfindingSolver:
         
         # Pulisci la cache e chiama la procedura ricorsiva, passando il gestore
         search.memoization_cache = {}
-        self.lunghezza_minima, self.sequenza_landmark = search.procedura_cammino_min(
+        self.lunghezza_minima, self.sequenza_landmark = search.procedura_cammino_min_ricorsiva(
             self.origin, 
             self.destination, 
             self.grid, 
