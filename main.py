@@ -16,10 +16,10 @@ def main_compito1():
 
     # --- 1. IMPOSTAZIONE DEI PARAMETRI DELLA GRIGLIA TRAMITE INPUT UTENTE ---
     try:
-        rows = int(input("Inserisci il numero di righe della griglia (default: 10): ") or 10)
-        cols = int(input("Inserisci il numero di colonne della griglia (default: 20): ") or 20)
+        rows = int(input("Inserisci il numero di righe della griglia: "))
+        cols = int(input("Inserisci il numero di colonne della griglia: "))
         
-        obstacle_ratio_input = input("Inserisci la percentuale di ostacoli (da 0 a 100, default: 20): ") or "20"
+        obstacle_ratio_input = input("Inserisci la percentuale di ostacoli (default: 20): ") or "20"
         obstacle_ratio = int(obstacle_ratio_input) / 100.0
         
         if not (0 <= obstacle_ratio <= 1):
