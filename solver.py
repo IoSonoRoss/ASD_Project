@@ -5,8 +5,7 @@ from data_structures import Grid
 from labeling import LabelManager
 import closure_logic
 import path_logic
-import search
-import visualization # Assumiamo che la logica di plotting sia qui
+import visualization
 
 class PathfindingSolver:
     def __init__(self, grid_data, origin, destination):
@@ -14,90 +13,131 @@ class PathfindingSolver:
         Il costruttore inizializza il problema.
         """
         print("Inizializzazione del solver...")
-        self.grid = Grid(grid_data) # Crea l'oggetto Grid
+        # 1. Crea la Grid logica dalla matrice di input
+        self.grid = Grid.from_matrix(grid_data)
         self.origin = origin
         self.destination = destination
-        self.label_manager = LabelManager()
         
-        # Attributi per i risultati
+        # 2. Inizializza helper e strutture per i risultati
+        self.label_manager = LabelManager()
+        self.memoization_cache = {}  # Cache per ottimizzare la ricorsione
         self.lunghezza_minima = float('inf')
         self.sequenza_landmark = []
-        
-        # Calcoli preliminari sulla chiusura di O
-        self.contesto_O, self.complemento_O = closure_logic.calcola_contesto_e_complemento(self.grid, self.origin)
-        self.frontiera_O_con_tipo = closure_logic.calcola_frontiera(self.grid, self.origin, self.contesto_O, self.complemento_O)
-        
-        # 2. Popola la mappa delle etichette per la frontiera di O SUBITO
-        self.frontiera_O_con_tipo.sort(key=lambda item: (item[0][0], item[0][1]))
-        for (coords, _) in self.frontiera_O_con_tipo:
-            self.label_manager.get_label(coords)
 
     def solve(self):
         """
-        [Versione Iterativa Fedele allo Pseudocodice]
-        Esegue l'algoritmo CAMMINOMIN e salva i risultati.
+        Avvia l'algoritmo ricorsivo CAMMINOMIN.
         """
         print(f"\n--- Esecuzione Procedura CAMMINOMIN da O={self.origin} a D={self.destination} ---")
-
-        # Righe 3-8: Controlla i casi base (D nella chiusura di O)
-        if self.destination in set(self.contesto_O):
-            self.lunghezza_minima = path_logic.calcola_distanza_libera(self.origin, self.destination)
-            self.sequenza_landmark = [(self.origin, 0), (self.destination, 1)]
-            print("--- Esecuzione completata (D nel Contesto) ---")
-            return
-
-        if self.destination in set(self.complemento_O):
-            self.lunghezza_minima = path_logic.calcola_distanza_libera(self.origin, self.destination)
-            self.sequenza_landmark = [(self.origin, 0), (self.destination, 2)]
-            print("--- Esecuzione completata (D nel Complemento) ---")
-            return
-            
-        # Riga 10-11: Vicolo cieco
-        if not self.frontiera_O_con_tipo:
-            print("Vicolo cieco: la frontiera di O è vuota.")
-            self.lunghezza_minima = float('inf')
-            self.sequenza_landmark = []
-            return
-
-        # Righe 12-13: Inizializzazione
-        lunghezza_min_locale, seq_min_locale = float('inf'), []
         
-        # Ordina la frontiera per ottimizzare il pruning
-        self.frontiera_O_con_tipo.sort(key=lambda x: path_logic.calcola_distanza_libera(x[0], self.destination))
-        
-        # Riga 14: Cicla sulla frontiera di O
-        for F_pos, tipo_F in self.frontiera_O_con_tipo:
-            lOF = path_logic.calcola_distanza_libera(self.origin, F_pos)
-
-            # Riga 17 (Pruning)
-            if lOF + path_logic.calcola_distanza_libera(F_pos, self.destination) >= lunghezza_min_locale:
-                continue
-
-            # Riga 18: CHIAMATA ad A* su una griglia modificata
-            grid_data_mod = [row[:] for row in self.grid.data]
-            chiusura_O = set(self.contesto_O) | set(self.complemento_O) | {self.origin}
-            for r, c in chiusura_O:
-                if (r, c) != F_pos: grid_data_mod[r][c] = 1
-            grid_mod = Grid(grid_data_mod)
-            
-            lFD, _ = search.cammino_min_reale_astar(grid_mod, F_pos, self.destination)
-            
-            if lFD == float('inf'):
-                continue
-            
-            # Righe 19-22: Aggiorna il percorso migliore
-            lTot = lOF + lFD
-            if lTot < lunghezza_min_locale:
-                lunghezza_min_locale = lTot
-                seq_min_locale = [(self.origin, 0), (F_pos, tipo_F), (self.destination, 3)]
-
-        # Salva i risultati finali
-        self.lunghezza_minima = lunghezza_min_locale
-        self.sequenza_landmark = seq_min_locale
+        # La chiamata iniziale parte con un set vuoto di ostacoli proibiti.
+        # frozenset è un set immutabile, necessario per essere usato come chiave in un dizionario (la cache).
+        self.lunghezza_minima, self.sequenza_landmark = self.cammino_min_ricorsivo(
+            self.origin, 
+            self.destination, 
+            frozenset(),
+            depth=0
+        )
         print("--- Esecuzione completata ---")
 
+    def cammino_min_ricorsivo(self, current_origin, current_dest, forbidden_obstacles, depth=0):
+        """
+        Implementazione ricorsiva con stampe di debug dettagliate.
+        """
+        # --- BLOCCO DI DEBUG INIZIALE ---
+        indent = "  " * depth
+        print(f"\n{indent}╔══════════════════════════════════════════════════════")
+        print(f"{indent}║ RICORSIONE (Livello {depth}): CAMMINOMIN({current_origin}, {current_dest})")
+        print(f"{indent}║ Ostacoli Proibiti: {len(forbidden_obstacles)} elementi")
+        
+        # --- PASSO 1: GESTIONE DELLA CACHE (MEMOIZZAZIONE) ---
+        cache_key = (current_origin, current_dest, forbidden_obstacles)
+        if cache_key in self.memoization_cache:
+            print(f"{indent}║ -> Trovato in CACHE. Ritorno il risultato salvato.")
+            print(f"{indent}╚══════════════════════════════════════════════════════")
+            return self.memoization_cache[cache_key]
+
+        # --- PASSO 2: CASO BASE DELLA RICORSIONE ---
+        if current_origin == current_dest:
+            print(f"{indent}║ -> CASO BASE: Origine == Destinazione. Ritorno (0, [...]).")
+            print(f"{indent}╚══════════════════════════════════════════════════════")
+            return 0, [(current_origin, 1)]
+
+        # --- PASSO 3: CALCOLO CHIUSURA E CASI BASE ---
+        contesto, complemento = closure_logic.calcola_contesto_e_complemento(
+            self.grid, current_origin, forbidden_obstacles
+        )
+        print(f"{indent}║ Chiusura calcolata: {len(contesto)} nel contesto, {len(complemento)} nel complemento.")
+
+        if current_dest in set(contesto):
+            dist = path_logic.calcola_distanza_libera(current_origin, current_dest)
+            print(f"{indent}║ -> CASO BASE: Destinazione nel CONTESTO. Ritorno ({dist:.2f}, [...]).")
+            print(f"{indent}╚══════════════════════════════════════════════════════")
+            seq = [(current_origin, 0), (current_dest, 1)]
+            self.memoization_cache[cache_key] = (dist, seq)
+            return dist, seq
+        
+        if current_dest in set(complemento):
+            dist = path_logic.calcola_distanza_libera(current_origin, current_dest)
+            print(f"{indent}║ -> CASO BASE: Destinazione nel COMPLEMENTO. Ritorno ({dist:.2f}, [...]).")
+            print(f"{indent}╚══════════════════════════════════════════════════════")
+            seq = [(current_origin, 0), (current_dest, 2)]
+            self.memoization_cache[cache_key] = (dist, seq)
+            return dist, seq
+
+        # --- PASSO 4: PASSO RICORSIVO ---
+        frontiera = closure_logic.calcola_frontiera(
+            self.grid, current_origin, contesto, complemento, forbidden_obstacles
+        )
+        print(f"{indent}║ Frontiera calcolata: {len(frontiera)} celle.")
+        
+        if not frontiera:
+            print(f"{indent}║ -> VICOLO CIECO: Frontiera vuota. Ritorno (inf, []).")
+            print(f"{indent}╚══════════════════════════════════════════════════════")
+            return float('inf'), []
+
+        best_len_locale, best_seq_locale = float('inf'), []
+        frontiera.sort(key=lambda item: path_logic.calcola_distanza_libera(item[0], current_dest))
+        
+        print(f"{indent}║ Inizio ciclo FOR sulla frontiera...")
+        for i, (f_pos, f_type) in enumerate(frontiera):
+            len_of = path_logic.calcola_distanza_libera(current_origin, f_pos)
+            
+            # Stampa di debug per ogni elemento della frontiera
+            print(f"{indent}║ ({i+1}/{len(frontiera)}) Esamino F={f_pos} (tipo {f_type}). Costo O->F: {len_of:.2f}")
+
+            if len_of + path_logic.calcola_distanza_libera(f_pos, current_dest) >= best_len_locale:
+                print(f"{indent}║   -> PRUNING: costo potenziale ({len_of + path_logic.calcola_distanza_libera(f_pos, current_dest):.2f}) >= miglior costo attuale ({best_len_locale:.2f})")
+                continue
+            
+            current_closure = set(contesto) | set(complemento) | {current_origin}
+            new_forbidden_obstacles = forbidden_obstacles.union(current_closure)
+            
+            # Chiamata ricorsiva
+            len_fd, seq_fd = self._cammino_min_ricorsivo(
+                f_pos, current_dest, new_forbidden_obstacles, depth + 1
+            )
+            
+            if len_fd != float('inf'):
+                total_len = len_of + len_fd
+                print(f"{indent}║   -> Ritorno da ricorsione per F={f_pos}. Costo F->D: {len_fd:.2f}. Totale: {total_len:.2f}")
+                if total_len < best_len_locale:
+                    print(f"{indent}║   -> NUOVO MIGLIOR PERCORSO LOCALE TROVATO! (costo {total_len:.2f})")
+                    best_len_locale = total_len
+                    best_seq_locale = path_logic.compatta_sequenza(
+                        [(current_origin, 0), (f_pos, f_type)], seq_fd
+                    )
+        
+        # --- PASSO 5: SALVATAGGIO IN CACHE E RITORNO ---
+        print(f"{indent}║ Fine ciclo FOR. Miglior risultato locale: ({best_len_locale if best_len_locale != float('inf') else 'inf'}, {len(best_seq_locale)} landmark).")
+        print(f"{indent}║ Salvo in CACHE e ritorno.")
+        print(f"{indent}╚══════════════════════════════════════════════════════")
+        
+        self.memoization_cache[cache_key] = (best_len_locale, best_seq_locale)
+        return best_len_locale, best_seq_locale
+
     def display_results(self):
-        """Stampa i risultati finali (lunghezza e sequenza)."""
+        # ... Questo metodo rimane quasi identico, ma ora usa le etichette per TUTTI i landmark ...
         if self.lunghezza_minima == float('inf'):
             print("\nRISULTATO: La destinazione D non è raggiungibile da O.")
             return
@@ -105,33 +145,39 @@ class PathfindingSolver:
         print(f"\nRISULTATO:")
         print(f"  Lunghezza del cammino minimo: {self.lunghezza_minima:.4f}")
         
-        mappa_finale = self.label_manager.mappa_coord_etichetta
+        # Popoliamo le etichette per tutti i landmark trovati
+        for lm_coords, _ in self.sequenza_landmark:
+             self.label_manager.get_label(lm_coords)
         
-        output_str = "<"
-        for i, (lm_coords, tipo) in enumerate(self.sequenza_landmark):
-            label = "O" if lm_coords == self.origin else "D" if lm_coords == self.destination else mappa_finale.get(lm_coords, str(lm_coords))
+        output_str = "< "
+        for lm_coords, tipo in self.sequenza_landmark:
+            label = "O" if lm_coords == self.origin else "D" if lm_coords == self.destination else self.label_manager.get_label(lm_coords)
             output_str += f"({label}, {tipo}) "
         print(f"  Sequenza di landmark: {output_str.strip()}>")
-    
-    def display_debug_info(self):
-        """Stampa informazioni di debug come la mappa delle etichette."""
-        print("\n--- DEBUG: Mappa Etichette Creata ---")
-        mappa_finale = self.label_manager.mappa_coord_etichetta
-        for coord, label in sorted(mappa_finale.items()):
-            print(f"  {coord} -> '{label}'")
-        print("---------------------------------------------")
-        
-    def visualize_closure_and_frontier(self):
-        """Crea e mostra la visualizzazione della chiusura e frontiera di O."""
-        vis_grid = np.array(self.grid.data, dtype=int)
-        for r, c in self.contesto_O: vis_grid[r, c] = 2
-        for r, c in self.complemento_O: vis_grid[r, c] = 3
-        for (r, c), _ in self.frontiera_O_con_tipo: vis_grid[r, c] = 5
-        vis_grid[self.origin[0], self.origin[1]] = 4
-        vis_grid[self.destination[0], self.destination[1]] = 6
 
+    def visualize_initial_closure_and_frontier(self):
+        """
+        Visualizza la chiusura e la frontiera del problema INIZIALE (partendo da O).
+        """
+        # Calcoliamo la chiusura e frontiera iniziale (se non già fatto)
+        contesto_O, complemento_O = closure_logic.calcola_contesto_e_complemento(self.grid, self.origin)
+        frontiera_O_con_tipo = closure_logic.calcola_frontiera(self.grid, self.origin, contesto_O, complemento_O)
+        
+        # Il resto è identico al tuo vecchio metodo, ma usa `self.grid.to_matrix()`
+        CELL_CONTESTO, CELL_COMPLEMENTO, CELL_ORIGINE, CELL_FRONTIERA, CELL_DESTINAZIONE = 2, 3, 4, 5, 6
+        
+        valori_speciali = {}
+        for r, c in contesto_O: valori_speciali[(r, c)] = CELL_CONTESTO
+        for r, c in complemento_O: valori_speciali[(r, c)] = CELL_COMPLEMENTO
+        for (r, c), _ in frontiera_O_con_tipo: valori_speciali[(r, c)] = CELL_FRONTIERA
+        valori_speciali[self.origin] = CELL_ORIGINE
+        valori_speciali[self.destination] = CELL_DESTINAZIONE
+        
+        vis_grid = self.grid.to_matrix(custom_values=valori_speciali)
+        
+        # Logica di visualizzazione (cmap, legend, etc.)
         color_map = {0:'white', 1:'#30307A', 2:'#90EE90', 3:'#FFD700', 4:'#FF0000', 5:'#006400', 6:'#800080'}
-        label_map = {0:'Spazio Libero', 1:'Ostacolo', 2:'Contesto di O', 3:'Complemento di O', 4:'Origine O', 5:'Frontiera di O', 6:'Destinazione D'}
+        label_map = {0:'Spazio Libero', 1:'Ostacolo', 2:'Contesto', 3:'Complemento', 4:'Origine O', 5:'Frontiera', 6:'Destinazione D'}
         cmap = ListedColormap([color_map.get(i) for i in sorted(color_map.keys())])
         legend_patches = [Patch(facecolor=color, edgecolor='black', label=label_map[key]) for key, color in color_map.items()]
         titolo = f"Chiusura e Frontiera di O={self.origin}"

@@ -2,15 +2,16 @@ import math
 import numpy as np
 from data_structures import Grid
 
-def is_path_free(grid: Grid, path): # Accetta un oggetto Grid
+def is_path_free(grid: Grid, path, forbidden_obstacles=frozenset()):
     """
-    Verifica se un percorso è libero, lavorando con un oggetto Grid.
+    Verifica se un percorso è libero, usando la nuova logica di Grid.
+    Un cammino libero NON può passare per ostacoli originali O proibiti.
     """
     if not path:
         return False
-    for coords in path[1:]:
-        # Usa i metodi della classe Grid
-        if not grid.is_within_bounds(coords) or grid.is_obstacle(coords):
+    # Controlliamo tutte le celle del percorso, inclusa l'origine.
+    for coords in path:
+        if not grid.is_traversable(coords, forbidden_obstacles):
             return False
     return True
 

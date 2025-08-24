@@ -1,51 +1,48 @@
 import path_logic
 from data_structures import Grid # Nuovo import
 
-def calcola_contesto_e_complemento(grid: Grid, origin):
+def calcola_contesto_e_complemento(grid: Grid, origin, forbidden_obstacles=frozenset()):
     """
-    [Versione Refactored] Calcola Contesto e Complemento usando un oggetto Grid.
+    Calcola Contesto e Complemento usando la nuova Grid e gestendo gli ostacoli proibiti.
     """
     contesto, complemento = [], []
-    for r_dest in range(grid.rows):
-        for c_dest in range(grid.cols):
-            destination = (r_dest, c_dest)
-            
-            # Usa i metodi della classe Grid
-            if destination == origin or grid.is_obstacle(destination):
-                continue
+    
+    # Iteriamo su tutte le celle attraversabili del grafo, non su una griglia rettangolare
+    for destination in grid.adj.keys():
+        if destination == origin:
+            continue
 
-            path_t1 = path_logic.generate_path_coordinates(origin, destination, True)
-            # Passa l'oggetto Grid alla funzione di validazione
-            if path_logic.is_path_free(grid, path_t1):
-                contesto.append(destination)
-            else:
-                path_t2 = path_logic.generate_path_coordinates(origin, destination, False)
-                if path_logic.is_path_free(grid, path_t2) and path_t1 != path_t2:
-                    complemento.append(destination)
-                    
+        # Non serve più controllare se la destinazione è un ostacolo,
+        # perché stiamo già iterando solo sulle celle valide.
+
+        path_t1 = path_logic.generate_path_coordinates(origin, destination, True)
+        if path_logic.is_path_free(grid, path_t1, forbidden_obstacles):
+            contesto.append(destination)
+        else:
+            path_t2 = path_logic.generate_path_coordinates(origin, destination, False)
+            # Aggiunto controllo per assicurarsi che il path_t2 sia valido
+            if path_logic.is_path_free(grid, path_t2, forbidden_obstacles) and path_t1 != path_t2:
+                complemento.append(destination)
+                
     return contesto, complemento
 
-def calcola_frontiera(grid: Grid, origin, contesto, complemento):
+def calcola_frontiera(grid: Grid, origin, contesto, complemento, forbidden_obstacles=frozenset()):
     """
-    [Versione Refactored] Calcola la frontiera usando un oggetto Grid.
+    Calcola la frontiera usando la nuova Grid e gestendo gli ostacoli proibiti.
     """
     chiusura = set(contesto) | set(complemento) | {origin}
     contesto_set = set(contesto)
     frontiera_con_tipo = []
     
-    directions = [(-1, 0), (1, 0), (0, -1), (0, 1), 
-                  (-1, -1), (-1, 1), (1, -1), (1, 1)]
-    
-    for r, c in chiusura:
-        for dr, dc in directions:
-            nr, nc = r + dr, c + dc
-            neighbor_pos = (nr, nc)
+    for cell_in_chiusura in chiusura:
+        # Usiamo get_neighbors() per trovare i vicini reali secondo il grafo
+        # Questo è molto più elegante e corretto!
+        for neighbor_pos in grid.get_neighbors(cell_in_chiusura):
             
-            # Usa i metodi della classe Grid
-            if grid.is_within_bounds(neighbor_pos):
-                if not grid.is_obstacle(neighbor_pos) and neighbor_pos not in chiusura:
-                    tipo = 1 if (r, c) in contesto_set else 2
-                    frontiera_con_tipo.append(((r, c), tipo))
-                    break 
+            # La frontiera è una cella della chiusura adiacente a una cella libera FUORI dalla chiusura
+            if neighbor_pos not in chiusura and grid.is_traversable(neighbor_pos, forbidden_obstacles):
+                tipo = 1 if cell_in_chiusura in contesto_set else 2
+                frontiera_con_tipo.append((cell_in_chiusura, tipo))
+                break # Trovato un vicino esterno, passiamo alla prossima cella della chiusura
             
     return frontiera_con_tipo

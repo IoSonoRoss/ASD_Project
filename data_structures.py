@@ -1,83 +1,97 @@
+import math
 import heapq
 
 class Grid:
     """
-    Rappresenta la griglia del problema. Incapsula i dati della mappa e
-    fornisce metodi di utility per interagire con essa.
+    Rappresenta la griglia del problema come un grafo usando una lista di adiacenze.
+    La lista di adiacenze è un dizionario: {coord: {neighbor_coord: cost}}.
     """
-    def __init__(self, grid_data):
-        self.data = grid_data
-        self.rows = len(grid_data)
-        self.cols = len(grid_data[0]) if self.rows > 0 else 0
+    def __init__(self, rows, cols):
+        self.rows = rows
+        self.cols = cols
+        self.adj = {} # La nostra lista di adiacenze
 
-    def is_obstacle(self, coords):
-        """Controlla se una cella è un ostacolo."""
-        r, c = coords
-        return self.data[r][c] == 1
+    @classmethod
+    def from_matrix(cls, grid_data):
+        """
+        Metodo factory per creare e popolare la Grid (con la sua lista di adiacenze)
+        a partire da una matrice numerica di ostacoli.
+        """
+        rows = len(grid_data)
+        cols = len(grid_data[0]) if rows > 0 else 0
+        
+        grid = cls(rows, cols)
+
+        # 1. Aggiungi tutti i nodi attraversabili alla lista di adiacenze
+        obstacles = set()
+        for r in range(rows):
+            for c in range(cols):
+                if grid_data[r][c] == 1:
+                    obstacles.add((r, c))
+                else:
+                    grid.adj[(r, c)] = {} # Inizializza un dizionario vuoto per i vicini
+
+        # 2. Popola i vicini per ogni nodo attraversabile
+        moves = {
+            "cardinal": [(-1, 0), (1, 0), (0, -1), (0, 1)],
+            "diagonal": [(-1, -1), (-1, 1), (1, -1), (1, 1)]
+        }
+        
+        for r_curr, c_curr in grid.adj.keys():
+            # Mosse Cardinali
+            for dr, dc in moves["cardinal"]:
+                nr, nc = r_curr + dr, c_curr + dc
+                if (nr, nc) in grid.adj: # Se il vicino è una cella valida e non un ostacolo
+                    grid.adj[(r_curr, c_curr)][(nr, nc)] = 1.0
+
+            # Mosse Diagonali
+            for dr, dc in moves["diagonal"]:
+                nr, nc = r_curr + dr, c_curr + dc
+                if (nr, nc) in grid.adj:
+                    # Regola per l'attraversamento degli spigoli: consentito
+                    grid.adj[(r_curr, c_curr)][(nr, nc)] = math.sqrt(2)
+        
+        return grid
+
+    def is_traversable(self, coords, forbidden_obstacles=frozenset()):
+        """
+        Controlla se una cella è nel grafo (quindi non è un ostacolo originale)
+        E non è un ostacolo temporaneo (proibito).
+        """
+        return coords in self.adj and coords not in forbidden_obstacles
+
+    def get_neighbors(self, coords):
+        """Restituisce i vicini di una cella dalla lista di adiacenze."""
+        return self.adj.get(coords, {})
 
     def is_within_bounds(self, coords):
         """Controlla se una coordinata è dentro i limiti della griglia."""
         r, c = coords
         return 0 <= r < self.rows and 0 <= c < self.cols
+    
+    def to_matrix(self, custom_values=None, default_obstacle_val=1, default_free_val=0):
+        """
+        Converte la rappresentazione interna (lista di adiacenze) in una
+        matrice numerica, adatta per la stampa o la visualizzazione.
 
-class State:
-    """
-    Rappresenta uno stato nella ricerca (es. un nodo in A* o un landmark).
-    Contiene la posizione, il riferimento al genitore e il costo per raggiungerlo.
-    """
-    def __init__(self, position, parent=None, g_cost=0.0):
-        self.position = position
-        self.parent = parent
-        self.g_cost = g_cost # Costo esatto dall'origine (g(n))
-
-    def __lt__(self, other):
-        """Confronto necessario per la coda di priorità."""
-        return False # L'ordine dipende dal f_score, non dallo stato in sé
-
-    def __eq__(self, other):
-        """Due stati sono uguali se hanno la stessa posizione."""
-        return isinstance(other, State) and self.position == other.position
-
-    def __hash__(self):
-        """Permette di usare gli oggetti State in set e dizionari."""
-        return hash(self.position)
-
-class PriorityQueue:
-    """
-    Una coda di priorità (min-heap) per gestire la Open List.
-    """
-    def __init__(self):
-        self._elements = []
-        self._entry_finder = {} # Dizionario per aggiornamenti rapidi
-        self._counter = 0 # Contatore per gestire gli spareggi
-
-    def add(self, item, priority):
-        """Aggiunge un elemento alla coda o aggiorna la sua priorità."""
-        if item in self._entry_finder:
-            # Se l'elemento è già presente, lo marchiamo come rimosso
-            # e ne aggiungiamo una nuova versione con la priorità aggiornata.
-            # Questo è più efficiente che cercare e modificare.
-            self.remove(item)
+        :param custom_values: Un dizionario opzionale {coord: valore} per
+                              colorare celle specifiche (es. Origine, Frontiera).
+        :param default_obstacle_val: Il valore numerico per gli ostacoli.
+        :param default_free_val: Il valore numerico per le celle libere.
+        :return: Una lista di liste (matrice numerica).
+        """
+        # 1. Crea una matrice piena del valore degli ostacoli
+        matrix = [[default_obstacle_val for _ in range(self.cols)] for _ in range(self.rows)]
         
-        entry = [priority, self._counter, item]
-        self._entry_finder[item] = entry
-        heapq.heappush(self._elements, entry)
-        self._counter += 1
-
-    def remove(self, item):
-        """Marca un elemento come rimosso."""
-        if item in self._entry_finder:
-            entry = self._entry_finder.pop(item)
-            entry[-1] = None # L'elemento viene "invalidato"
-
-    def pop(self):
-        """Rimuove e restituisce l'elemento con la priorità più bassa."""
-        while self._elements:
-            priority, count, item = heapq.heappop(self._elements)
-            if item is not None:
-                del self._entry_finder[item]
-                return item
-        raise KeyError('pop from an empty priority queue')
-
-    def is_empty(self):
-        return not self._entry_finder
+        # 2. Per ogni cella attraversabile (le chiavi di adj), imposta il valore di default per le celle libere
+        for r, c in self.adj.keys():
+            matrix[r][c] = default_free_val
+            
+        # 3. Se sono stati forniti valori personalizzati, applicali
+        if custom_values:
+            for (r, c), value in custom_values.items():
+                # Assicurati che le coordinate siano valide prima di scrivere
+                if 0 <= r < self.rows and 0 <= c < self.cols:
+                    matrix[r][c] = value
+                    
+        return matrix
