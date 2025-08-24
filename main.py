@@ -84,6 +84,7 @@ def main():
     
     # Mostra la visualizzazione della chiusura e frontiera di O
     solver_instance.visualize_closure_and_frontier()
+    solver_instance.display_debug_info()
     
     # Esegui l'algoritmo principale per trovare il cammino minimo
     solver_instance.solve()

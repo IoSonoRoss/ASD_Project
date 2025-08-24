@@ -1,5 +1,3 @@
-# File: solver.py
-
 import numpy as np
 from matplotlib.colors import ListedColormap
 from matplotlib.patches import Patch
@@ -28,7 +26,11 @@ class PathfindingSolver:
         # Calcoli preliminari sulla chiusura di O
         self.contesto_O, self.complemento_O = closure_logic.calcola_contesto_e_complemento(self.grid, self.origin)
         self.frontiera_O_con_tipo = closure_logic.calcola_frontiera(self.grid, self.origin, self.contesto_O, self.complemento_O)
-        print("Solver inizializzato.")
+        
+        # 2. Popola la mappa delle etichette per la frontiera di O SUBITO
+        self.frontiera_O_con_tipo.sort(key=lambda item: (item[0][0], item[0][1]))
+        for (coords, _) in self.frontiera_O_con_tipo:
+            self.label_manager.get_label(coords)
 
     def solve(self):
         """
@@ -95,7 +97,7 @@ class PathfindingSolver:
         print("--- Esecuzione completata ---")
 
     def display_results(self):
-        """Stampa i risultati formattati a terminale."""
+        """Stampa i risultati finali (lunghezza e sequenza)."""
         if self.lunghezza_minima == float('inf'):
             print("\nRISULTATO: La destinazione D non è raggiungibile da O.")
             return
@@ -103,16 +105,21 @@ class PathfindingSolver:
         print(f"\nRISULTATO:")
         print(f"  Lunghezza del cammino minimo: {self.lunghezza_minima:.4f}")
         
-        # Crea la mappa di etichette solo per le frontiere di O
-        self.frontiera_O_con_tipo.sort(key=lambda item: (item[0][0], item[0][1]))
-        labels = "ABCDEFGHIJKLMNPQRSTUVWXYZEΣΔΦΓ&*%$#@"
-        mappa_O = {item[0]: labels[i] for i, (item, tipo) in enumerate(self.frontiera_O_con_tipo) if i < len(labels)}
-
+        mappa_finale = self.label_manager.mappa_coord_etichetta
+        
         output_str = "<"
         for i, (lm_coords, tipo) in enumerate(self.sequenza_landmark):
-            label = "O" if lm_coords == self.origin else "D" if lm_coords == self.destination else mappa_O.get(lm_coords, str(lm_coords))
+            label = "O" if lm_coords == self.origin else "D" if lm_coords == self.destination else mappa_finale.get(lm_coords, str(lm_coords))
             output_str += f"({label}, {tipo}) "
         print(f"  Sequenza di landmark: {output_str.strip()}>")
+    
+    def display_debug_info(self):
+        """Stampa informazioni di debug come la mappa delle etichette."""
+        print("\n--- DEBUG: Mappa Etichette Creata ---")
+        mappa_finale = self.label_manager.mappa_coord_etichetta
+        for coord, label in sorted(mappa_finale.items()):
+            print(f"  {coord} -> '{label}'")
+        print("---------------------------------------------")
         
     def visualize_closure_and_frontier(self):
         """Crea e mostra la visualizzazione della chiusura e frontiera di O."""
