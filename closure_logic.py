@@ -1,32 +1,33 @@
 import path_logic
+from data_structures import Grid # Nuovo import
 
-def calcola_contesto_e_complemento(grid, origin):
+def calcola_contesto_e_complemento(grid: Grid, origin):
     """
-    Calcola il Contesto e il Complemento di O.
-    - Contesto: raggiungibile con un cammino libero di Tipo 1.
-    - Complemento: NON raggiungibile con T1, ma raggiungibile con T2.
+    [Versione Refactored] Calcola Contesto e Complemento usando un oggetto Grid.
     """
-    num_rows, num_cols = len(grid), len(grid[0])
     contesto, complemento = [], []
-    for r_dest in range(num_rows):
-        for c_dest in range(num_cols):
+    for r_dest in range(grid.rows):
+        for c_dest in range(grid.cols):
             destination = (r_dest, c_dest)
-            if destination == origin or grid[r_dest][c_dest] == 1:
+            
+            # Usa i metodi della classe Grid
+            if destination == origin or grid.is_obstacle(destination):
                 continue
+
             path_t1 = path_logic.generate_path_coordinates(origin, destination, True)
+            # Passa l'oggetto Grid alla funzione di validazione
             if path_logic.is_path_free(grid, path_t1):
                 contesto.append(destination)
             else:
                 path_t2 = path_logic.generate_path_coordinates(origin, destination, False)
                 if path_logic.is_path_free(grid, path_t2) and path_t1 != path_t2:
                     complemento.append(destination)
+                    
     return contesto, complemento
 
-def calcola_frontiera(grid, origin, contesto, complemento):
+def calcola_frontiera(grid: Grid, origin, contesto, complemento):
     """
-    [Versione Definitiva] Calcola la frontiera di O e associa a ogni cella 
-    il suo tipo (1 per contesto, 2 per complemento).
-    Restituisce una lista di tuple nel formato: [ ((riga, colonna), tipo) ].
+    [Versione Refactored] Calcola la frontiera usando un oggetto Grid.
     """
     chiusura = set(contesto) | set(complemento) | {origin}
     contesto_set = set(contesto)
@@ -38,17 +39,13 @@ def calcola_frontiera(grid, origin, contesto, complemento):
     for r, c in chiusura:
         for dr, dc in directions:
             nr, nc = r + dr, c + dc
+            neighbor_pos = (nr, nc)
             
-            if 0 <= nr < len(grid) and 0 <= nc < len(grid[0]):
-                neighbor_pos = (nr, nc)
-                if grid[nr][nc] == 0 and neighbor_pos not in chiusura:
-                    
-                    # Determina il tipo della cella di frontiera (r,c)
+            # Usa i metodi della classe Grid
+            if grid.is_within_bounds(neighbor_pos):
+                if not grid.is_obstacle(neighbor_pos) and neighbor_pos not in chiusura:
                     tipo = 1 if (r, c) in contesto_set else 2
-                    
-                    # Aggiungi la tupla nel formato corretto ((r,c), tipo)
-                    frontiera_con_tipo.append( ((r, c), tipo) )
-                    
+                    frontiera_con_tipo.append(((r, c), tipo))
                     break 
             
     return frontiera_con_tipo

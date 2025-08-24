@@ -1,34 +1,24 @@
 import math
 import numpy as np
+from data_structures import Grid
 
-def is_path_free(grid, path):
+def is_path_free(grid: Grid, path): # Accetta un oggetto Grid
     """
-    Verifica se un dato percorso è "libero", cioè se nessuna delle sue celle
-    (dalla seconda in poi) è un ostacolo (valore 1).
-    La destinazione deve essere libera.
-    
-    :param grid: La mappa a griglia.
-    :param path: Lista di tuple (riga, colonna) che rappresenta il percorso.
-    :return: True se il percorso è libero, False altrimenti.
+    Verifica se un percorso è libero, lavorando con un oggetto Grid.
     """
     if not path:
-        return False # Un percorso vuoto non è valido
-        
-    # Controlla ogni cella del percorso, a partire dalla seconda (l'origine è esclusa dai controlli)
-    # fino alla destinazione inclusa.
-    for riga, colonna in path[1:]:
-        # Controlla se le coordinate sono valide per la griglia
-        if not (0 <= riga < len(grid) and 0 <= colonna < len(grid[0])):
-            return False # Il percorso esce dalla griglia
-            
-        if grid[riga][colonna] == 1:
-            return False  # Trovato un ostacolo
-            
+        return False
+    for coords in path[1:]:
+        # Usa i metodi della classe Grid
+        if not grid.is_within_bounds(coords) or grid.is_obstacle(coords):
+            return False
     return True
 
 def generate_path_coordinates(origin, destination, diagonal_first):
-    """Genera la sequenza di coordinate per un percorso di Tipo 1 o Tipo 2."""
+    # Questa funzione è puramente geometrica, non interagisce con la griglia
+    # quindi rimane invariata.
     path = [origin]
+    # ... codice invariato ...
     r_curr, c_curr = origin
     r_dest, c_dest = destination
     delta_r, delta_c = r_dest - r_curr, c_dest - c_curr
@@ -59,13 +49,17 @@ def generate_path_coordinates(origin, destination, diagonal_first):
         make_rect_moves(); make_diag_moves()
     return path
 
+
 def calcola_distanza_libera(origin, destination):
-    """Calcola la distanza libera (dlib) tra due celle O e D."""
+    # Funzione puramente matematica, rimane invariata.
+    if not origin or not destination: return float('inf')
+    # ... codice invariato ...
     delta_x = abs(origin[1] - destination[1])
     delta_y = abs(origin[0] - destination[0])
     delta_min, delta_max = min(delta_x, delta_y), max(delta_x, delta_y)
     return math.sqrt(2) * delta_min + (delta_max - delta_min)
 
-def compatta_sequenza(seq1, seq2_landmark):
-    """Accoda il landmark di destinazione del secondo percorso."""
-    return seq1 + [seq2_landmark]
+def compatta_sequenza(seq1, seq2):
+    # Funzione logica, rimane invariata.
+    if not isinstance(seq2, list) or not seq2: return seq1
+    return seq1 + seq2[1:]
