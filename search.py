@@ -58,7 +58,10 @@ def cammino_min_reale_astar(grid: Grid, start_pos, end_pos):
 
 # --- PROCEDURA CAMMINOMIN REFACTORED ---
 def procedura_cammino_min_ricorsiva(origin_pos, destination_pos, original_grid: Grid, label_manager, stats_tracker, ostacoli_proibiti=frozenset(), depth=0):
-    
+    """
+    Procedura ricorsiva per trovare il cammino minimo tra due posizioni su una griglia,
+    tenendo conto degli ostacoli proibiti e utilizzando la memorizzazione per ottimizzare.
+    """
     cache_key = (origin_pos, destination_pos, frozenset(sorted(list(ostacoli_proibiti))))
     if cache_key in memoization_cache:
         return memoization_cache[cache_key]
@@ -86,7 +89,8 @@ def procedura_cammino_min_ricorsiva(origin_pos, destination_pos, original_grid: 
     frontiera_con_tipo = closure_logic.calcola_frontiera(grid_temp, origin_pos, contesto, complemento)
     
     stats_tracker.add_frontier_cells(frontiera_con_tipo)
-    for (coords, _) in frontiera_con_tipo: label_manager.get_label(coords)
+    for (coords, _) in frontiera_con_tipo:
+        label_manager.get_label(coords)
 
     if not frontiera_con_tipo:
         return float('inf'), []
@@ -108,7 +112,8 @@ def procedura_cammino_min_ricorsiva(origin_pos, destination_pos, original_grid: 
             frozenset(nuovi_ostacoli_proibiti), depth + 1
         )
         
-        if lFD == float('inf'): continue
+        if lFD == float('inf'):
+            continue
         
         lTot = lOF + lFD
         if lTot < lunghezza_min:

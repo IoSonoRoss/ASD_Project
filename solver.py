@@ -131,6 +131,17 @@ class PathfindingSolver:
         return best_len_locale, best_seq_locale
 
     def display_results(self):
+        """Visualizza i risultati del calcolo del cammino minimo.
+           Se la destinazione non è raggiungibile dall'origine, stampa un messaggio.
+            Altrimenti, mostra la lunghezza minima e la sequenza di landmark attraversati,
+            includendo le etichette e i tipi.
+            L'output include:
+                - Un messaggio se la destinazione non è raggiungibile.
+                - La lunghezza del cammino minimo, formattata a quattro decimali.
+                - La sequenza di landmark come lista di tuple (etichetta, tipo), dove l'etichetta è
+                'O' per l'origine, 'D' per la destinazione, oppure recuperata dal label manager
+                per gli altri landmark.
+    """
         if self.lunghezza_minima == float('inf'):
             print("\nRISULTATO: La destinazione D non è raggiungibile da O.")
             return
