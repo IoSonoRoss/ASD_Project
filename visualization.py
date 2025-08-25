@@ -3,6 +3,11 @@ import numpy as np
 from matplotlib.colors import ListedColormap
 
 def visualizza_gridmap_pcolormesh(grid):
+    """
+    Visualizza la gridmap usando matplotlib con colormesh.
+    Parametri:
+        grid (list of list of int): griglia 2D che rappresenta la mappa,dove il valore di ogni cella ne determina il colore.
+    """""
     np_grid = np.array(grid)
     rows, cols = np_grid.shape
 
