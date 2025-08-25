@@ -11,8 +11,7 @@ def main_compito1():
     - Visualizzazione grafica della mappa generata.
     """
     
-    print("--- Progetto Algoritmi e Strutture Dati - Dimostrazione Compito 1 ---")
-    print("Questo script si occupa della generazione di mappe a griglia con ostacoli.\n")
+    print("--- Progetto Algoritmi e Strutture Dati ---")
 
     # --- 1. IMPOSTAZIONE DEI PARAMETRI DELLA GRIGLIA TRAMITE INPUT UTENTE ---
     try:

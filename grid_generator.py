@@ -2,7 +2,7 @@ import random
 
 def generate_grid_map(rows=10, cols=20, obstacle_ratio=0.2):
     """
-    [Versione Semplificata] Genera una mappa a griglia con ostacoli,
+    Genera una mappa a griglia con ostacoli,
     basandosi esclusivamente su una percentuale.
     """
 
