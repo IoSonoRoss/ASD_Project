@@ -17,17 +17,15 @@ def main_compito2():
     - Visualizzazione grafica dei risultati.
     """
     
-    print("--- Progetto Algoritmi e Strutture Dati")
     try:
-        rows = int(input("Inserisci il numero di righe della griglia (default: 10): ") or 10)
-        cols = int(input("Inserisci il numero di colonne della griglia (default: 20): ") or 20)
-        obstacle_ratio_input = input("Inserisci la percentuale di ostacoli (da 0 a 100, default: 25): ") or "25"
+        rows = int(input("Inserisci il numero di righe della griglia: "))
+        cols = int(input("Inserisci il numero di colonne della griglia: "))
+        obstacle_ratio_input = input("Inserisci la percentuale di ostacoli (default: 20%): ") or "20"
         obstacle_ratio = int(obstacle_ratio_input) / 100.0
         if not (0 <= obstacle_ratio <= 1):
             raise ValueError
     except ValueError:
-        print("Input non valido. Utilizzo valori di default (10x20, 25% ostacoli).")
-        rows, cols, obstacle_ratio = 10, 20, 0.25
+        print("Input non valido. Utilizzo valori di default.")
 
     grid_data = grid_generator.generate_grid_map(rows=rows, cols=cols, obstacle_ratio=obstacle_ratio)
     grid = Grid.from_matrix(grid_data)
@@ -35,7 +33,7 @@ def main_compito2():
     
     while True:
         try:
-            o_input = input(f"Inserisci le coordinate dell'origine 'riga,colonna' (es. 0,0): ").strip()
+            o_input = input(f"Inserisci le coordinate dell'origine (riga,colonna): ").strip()
             O = tuple(map(int, o_input.split(',')))
             if not grid.is_traversable(O):
                 print("ERRORE: La cella di origine non è attraversabile (è un ostacolo o fuori dai limiti). Riprova.")
@@ -46,7 +44,7 @@ def main_compito2():
 
     while True:
         try:
-            d_input = input(f"Inserisci le coordinate della destinazione 'riga,colonna' (es. {rows-1},{cols-1}): ").strip()
+            d_input = input(f"Inserisci le coordinate della destinazione (riga,colonna): ").strip()
             D = tuple(map(int, d_input.split(',')))
             if not grid.is_traversable(D):
                 print("ERRORE: La cella di destinazione non è attraversabile. Riprova.")
