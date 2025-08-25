@@ -2,11 +2,13 @@ import path_logic
 from data_structures import Grid
 
 def calcola_contesto_e_complemento(grid: Grid, origin, forbidden_obstacles=frozenset()):
+    """
+    Calcola Contesto e Complemento usando la nuova Grid e gestendo gli ostacoli proibiti.
+    """
     contesto, complemento = [], []
     for destination in grid.adj.keys():
         if destination == origin:
             continue
-        # Passa forbidden_obstacles a is_path_free
         path_t1 = path_logic.generate_path_coordinates(origin, destination, True)
         if path_logic.is_path_free(grid, path_t1, forbidden_obstacles):
             contesto.append(destination)
@@ -28,7 +30,6 @@ def calcola_frontiera(grid: Grid, origin, contesto, complemento, forbidden_obsta
     candidate_frontiera = set(contesto) | set(complemento)
     
     for cella_candidata in candidate_frontiera:
-        # Per ogni candidato, controlliamo se ha almeno un vicino attraversabile FUORI dalla chiusura.
         for neighbor_pos in grid.get_neighbors(cella_candidata):
             if neighbor_pos not in chiusura and grid.is_traversable(neighbor_pos, forbidden_obstacles):
                 tipo = 1 if cella_candidata in contesto_set else 2

@@ -12,7 +12,7 @@ memoization_cache = {}
 # --- A* REFACTORED PER USARE LE NUOVE CLASSI ---
 def cammino_min_reale_astar(grid: Grid, start_pos, end_pos):
     """
-    [Versione Refactored] Algoritmo A* che usa State e PriorityQueue.
+    Algoritmo A* che usa State e PriorityQueue.
     """
     start_state = State(start_pos, g_cost=0.0)
     
@@ -21,7 +21,6 @@ def cammino_min_reale_astar(grid: Grid, start_pos, end_pos):
     f_score_start = path_logic.calcola_distanza_libera(start_pos, end_pos)
     open_list.add(start_state, f_score_start)
     
-    # La closed list ora contiene oggetti State, per ricostruire il percorso
     closed_set = set()
 
     neighbors_moves = [((0, 1), 1), ((0, -1), 1), ((1, 0), 1), ((-1, 0), 1),
@@ -32,7 +31,6 @@ def cammino_min_reale_astar(grid: Grid, start_pos, end_pos):
         current_state = open_list.pop()
 
         if current_state.position == end_pos:
-            # Ricostruisci il percorso risalendo i parent
             path = []
             curr = current_state
             while curr:
@@ -61,26 +59,19 @@ def cammino_min_reale_astar(grid: Grid, start_pos, end_pos):
 # --- PROCEDURA CAMMINOMIN REFACTORED ---
 def procedura_cammino_min_ricorsiva(origin_pos, destination_pos, original_grid: Grid, label_manager, stats_tracker, ostacoli_proibiti=frozenset(), depth=0):
     
-    # ... (Stampa di debug iniziale, invariata) ...
-    
     cache_key = (origin_pos, destination_pos, frozenset(sorted(list(ostacoli_proibiti))))
     if cache_key in memoization_cache:
         return memoization_cache[cache_key]
 
     if origin_pos == destination_pos:
         return 0, [(origin_pos, 1)]
-    
-    # Crea una griglia temporanea per questa chiamata
-    # NOTA: Questo è il punto meno efficiente. Una soluzione avanzata
-    # passerebbe solo il set di ostacoli e modificherebbe i metodi di Grid.
-    # Per ora, questo è più semplice e robusto.
+   
     grid_data_temp = [row[:] for row in original_grid.data]
     for r, c in ostacoli_proibiti:
         if 0 <= r < original_grid.rows and 0 <= c < original_grid.cols:
             grid_data_temp[r][c] = 1
     grid_temp = Grid(grid_data_temp)
     
-    # Calcola chiusura e frontiera sulla griglia temporanea
     contesto, complemento = closure_logic.calcola_contesto_e_complemento(grid_temp, origin_pos)
     
     if destination_pos in set(contesto):
@@ -112,21 +103,6 @@ def procedura_cammino_min_ricorsiva(origin_pos, destination_pos, original_grid: 
         chiusura_attuale = set(contesto) | set(complemento) | {origin_pos}
         nuovi_ostacoli_proibiti = ostacoli_proibiti.union(chiusura_attuale)
         
-        # CHIAMATA RICORSIVA
-        # Ora, invece di passare una griglia modificata, passiamo la griglia originale
-        # e un set aggiornato di ostacoli. Ma questo richiederebbe di modificare
-        # tutte le funzioni. La nostra logica attuale di ricreare grid_temp è corretta.
-        # Per la chiamata A* invece non serve ricorsione.
-        
-        # ERRORE LOGICO PRECEDENTE: `procedura_cammino_min` è per percorsi liberi.
-        # Qui serve l'algoritmo A*.
-        
-        # Correzione: `procedura_cammino_min_iterativa` (che usa A*)
-        # è più vicina allo pseudocodice.
-        # Ma per mantenere la ricorsione, A* è solo per l'ultimo miglio.
-
-        # --- Questo blocco è stato rimosso in favore di un approccio iterativo nel solver ---
-        # Per ora lasciamo la versione ricorsiva, ma è inefficiente
         lFD, seqFD = procedura_cammino_min_ricorsiva(
             F_pos, destination_pos, original_grid, label_manager, stats_tracker,
             frozenset(nuovi_ostacoli_proibiti), depth + 1

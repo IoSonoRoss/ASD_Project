@@ -4,7 +4,6 @@ from data_structures import Grid
 
 def is_path_free(grid: Grid, path, forbidden_obstacles=frozenset()):
     """
-    [Versione Corretta]
     Verifica se un percorso e libero. Controlla solo le celle del percorso
     SUCCESSIVE alla prima, poiche la prima e l'origine del sottoproblema
     e si assume che sia valida.
@@ -12,11 +11,9 @@ def is_path_free(grid: Grid, path, forbidden_obstacles=frozenset()):
     if not path:
         return False
         
-    # Un percorso con una sola cella (solo l'origine) e considerato valido.
     if len(path) < 2:
         return True
 
-    # Itera sul percorso SALTANDO la prima cella (l'origine).
     for coords in path[1:]:
         if not grid.is_traversable(coords, forbidden_obstacles):
             return False
