@@ -14,7 +14,7 @@ def visualizza_gridmap_pcolormesh(grid):
     y_coords = np.arange(rows + 1)
     ax.pcolormesh(x_coords, y_coords, np_grid, cmap=cmap, edgecolors='black', linewidth=1)
 
-    ax.set_title("Test di Isolamento: Dovresti vedere TUTTI i bordi")
+    ax.set_title("Griglia iniziale")
     ax.set_aspect('equal')
     ax.invert_yaxis()
     ax.axis('off') # Rimuoviamo gli assi per chiarezza

@@ -1,0 +1,6 @@
+rows,cols,obstacle_ratio,num_runs,id_scenario,run_num,origin,destination,lunghezza_OD,execution_time_OD,recursive_calls_OD,cache_hits_OD,total_unique_frontiers_OD,pruning_successes_OD,max_recursion_depth_OD,lunghezza_DO,execution_time_DO,recursive_calls_DO,cache_hits_DO,total_unique_frontiers_DO,pruning_successes_DO,max_recursion_depth_DO,correttezza_superata
+20,20,0.3,5,ostacoli_1,1,"(5, 0)","(16, 15)",inf,0.004714999930001795,2,0,1,0,2,inf,0.09989589999895543,41,0,40,0,2,True
+20,20,0.3,5,ostacoli_1,2,"(1, 9)","(18, 11)",inf,0.06288730003871024,25,0,24,0,2,inf,0.05266459996346384,21,0,20,0,2,True
+20,20,0.3,5,ostacoli_1,3,"(5, 4)","(16, 16)",16.556349186104047,0.0025058999890461564,1,0,0,0,1,16.556349186104047,0.002204500022344291,1,0,0,0,1,True
+20,20,0.3,5,ostacoli_1,4,"(4, 8)","(16, 13)",inf,0.04424540000036359,18,0,17,0,2,inf,0.09928680001758039,41,0,40,0,2,True
+20,20,0.3,5,ostacoli_1,5,"(4, 0)","(14, 17)",inf,0.0197317999554798,8,0,7,0,2,inf,0.05453540000598878,17,0,16,0,2,True
