@@ -4,14 +4,23 @@ from data_structures import Grid
 
 def is_path_free(grid: Grid, path, forbidden_obstacles=frozenset()):
     """
-    Verifica se un percorso è libero, usando la nuova logica di Grid.
-    Un cammino libero NON può passare per ostacoli originali O proibiti.
+    [Versione Corretta]
+    Verifica se un percorso e libero. Controlla solo le celle del percorso
+    SUCCESSIVE alla prima, poiche la prima e l'origine del sottoproblema
+    e si assume che sia valida.
     """
     if not path:
         return False
-    for coords in path:
+        
+    # Un percorso con una sola cella (solo l'origine) e considerato valido.
+    if len(path) < 2:
+        return True
+
+    # Itera sul percorso SALTANDO la prima cella (l'origine).
+    for coords in path[1:]:
         if not grid.is_traversable(coords, forbidden_obstacles):
             return False
+            
     return True
 
 def generate_path_coordinates(origin, destination, diagonal_first):
