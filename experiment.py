@@ -76,8 +76,11 @@ def main(args):
         {"rows": 20, "cols": 20, "obstacle_ratio": 0.30, "num_runs": 5},
         {"rows": 20, "cols": 20, "obstacle_ratio": 0.45, "num_runs": 3},
     ]
-    scenario_map = {"dimensione": scenari_dimensione, "ostacoli": scenari_ostacoli}
-    
+    scenari_stress_test = [
+        {"rows": 30, "cols": 30, "obstacle_ratio": 0.28, "num_runs": 3},
+    ]
+    scenario_map = {"dimensione": scenari_dimensione, "ostacoli": scenari_ostacoli, "stress_test": scenari_stress_test}
+
     test_type = args.test_type
     config_index = args.config_index
     
