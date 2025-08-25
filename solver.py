@@ -13,14 +13,12 @@ class PathfindingSolver:
         Il costruttore inizializza il problema.
         """
         print("Inizializzazione del solver...")
-        # 1. Crea la Grid logica dalla matrice di input
         self.grid = Grid.from_matrix(grid_data)
         self.origin = origin
         self.destination = destination
         
-        # 2. Inizializza helper e strutture per i risultati
         self.label_manager = LabelManager()
-        self.memoization_cache = {}  # Cache per ottimizzare la ricorsione
+        self.memoization_cache = {}  
         self.lunghezza_minima = float('inf')
         self.sequenza_landmark = []
 
@@ -30,8 +28,6 @@ class PathfindingSolver:
         """
         print(f"\n--- Esecuzione Procedura CAMMINOMIN da O={self.origin} a D={self.destination} ---")
         
-        # La chiamata iniziale parte con un set vuoto di ostacoli proibiti.
-        # frozenset è un set immutabile, necessario per essere usato come chiave in un dizionario (la cache).
         self.lunghezza_minima, self.sequenza_landmark = self.cammino_min_ricorsivo(
             self.origin, 
             self.destination, 
@@ -103,7 +99,6 @@ class PathfindingSolver:
         for i, (f_pos, f_type) in enumerate(frontiera):
             len_of = path_logic.calcola_distanza_libera(current_origin, f_pos)
             
-            # Stampa di debug per ogni elemento della frontiera
             print(f"{indent}║ ({i+1}/{len(frontiera)}) Esamino F={f_pos} (tipo {f_type}). Costo O->F: {len_of:.2f}")
 
             if len_of + path_logic.calcola_distanza_libera(f_pos, current_dest) >= best_len_locale:
@@ -113,7 +108,6 @@ class PathfindingSolver:
             current_closure = set(contesto) | set(complemento) | {current_origin}
             new_forbidden_obstacles = forbidden_obstacles.union(current_closure)
             
-            # Chiamata ricorsiva
             len_fd, seq_fd = self.cammino_min_ricorsivo(
                 f_pos, current_dest, new_forbidden_obstacles, depth + 1
             )
@@ -137,7 +131,6 @@ class PathfindingSolver:
         return best_len_locale, best_seq_locale
 
     def display_results(self):
-        # ... Questo metodo rimane quasi identico, ma ora usa le etichette per TUTTI i landmark ...
         if self.lunghezza_minima == float('inf'):
             print("\nRISULTATO: La destinazione D non è raggiungibile da O.")
             return
@@ -145,7 +138,6 @@ class PathfindingSolver:
         print(f"\nRISULTATO:")
         print(f"  Lunghezza del cammino minimo: {self.lunghezza_minima:.4f}")
         
-        # Popoliamo le etichette per tutti i landmark trovati
         for lm_coords, _ in self.sequenza_landmark:
              self.label_manager.get_label(lm_coords)
         
@@ -159,11 +151,9 @@ class PathfindingSolver:
         """
         Visualizza la chiusura e la frontiera del problema INIZIALE (partendo da O).
         """
-        # Calcoliamo la chiusura e frontiera iniziale (se non già fatto)
         contesto_O, complemento_O = closure_logic.calcola_contesto_e_complemento(self.grid, self.origin)
         frontiera_O_con_tipo = closure_logic.calcola_frontiera(self.grid, self.origin, contesto_O, complemento_O)
         
-        # Il resto è identico al tuo vecchio metodo, ma usa `self.grid.to_matrix()`
         CELL_CONTESTO, CELL_COMPLEMENTO, CELL_ORIGINE, CELL_FRONTIERA, CELL_DESTINAZIONE = 2, 3, 4, 5, 6
         
         valori_speciali = {}
@@ -175,7 +165,6 @@ class PathfindingSolver:
         
         vis_grid = self.grid.to_matrix(custom_values=valori_speciali)
         
-        # Logica di visualizzazione (cmap, legend, etc.)
         color_map = {0:'white', 1:'#30307A', 2:'#90EE90', 3:'#FFD700', 4:'#FF0000', 5:'#006400', 6:'#800080'}
         label_map = {0:'Spazio Libero', 1:'Ostacolo', 2:'Contesto', 3:'Complemento', 4:'Origine O', 5:'Frontiera', 6:'Destinazione D'}
         cmap = ListedColormap([color_map.get(i) for i in sorted(color_map.keys())])
