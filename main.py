@@ -2,6 +2,50 @@ import grid_generator
 import visualization
 from data_structures import Grid
 
+def get_user_configuration():
+    """
+    Gestisce l'input dell'utente per la configurazione della griglia in modo robusto,
+    con cicli di validazione per righe e colonne.
+    """
+    
+    # --- Input Robusto per le Righe ---
+    while True:
+        try:
+            rows_input = input("Inserisci il numero di righe della griglia: ")
+            rows = int(rows_input)
+            if rows > 0:
+                break  # L'input e valido, esci dal ciclo
+            else:
+                print("ERRORE: Il numero di righe deve essere un intero positivo. Riprova.")
+        except ValueError:
+            print("ERRORE: Input non valido. Inserisci un numero intero. Riprova.")
+
+    # --- Input Robusto per le Colonne ---
+    while True:
+        try:
+            cols_input = input("Inserisci il numero di colonne della griglia: ")
+            cols = int(cols_input)
+            if cols > 0:
+                break  # L'input e valido, esci dal ciclo
+            else:
+                print("ERRORE: Il numero di colonne deve essere un intero positivo. Riprova.")
+        except ValueError:
+            print("ERRORE: Input non valido. Inserisci un numero intero. Riprova.")
+
+    # --- Input per gli Ostacoli (con default) ---
+    # Questo mantiene il comportamento precedente, che va bene per un parametro non critico.
+    try:
+        obstacle_ratio_input = input("Inserisci la percentuale di ostacoli (default 20): ") or "20"
+        obstacle_ratio = int(obstacle_ratio_input) / 100.0
+        if not (0 <= obstacle_ratio <= 1):
+            print("Attenzione: Percentuale non valida. Verrà usato il 20%.")
+            obstacle_ratio = 0.20
+    except ValueError:
+        print("Attenzione: Input per ostacoli non valido. Verrà usato il 20%.")
+        obstacle_ratio = 0.20
+        
+    return rows, cols, obstacle_ratio
+
 def main_compito1():
     """
     Script principale per dimostrare le funzionalita del Compito 1:
@@ -10,21 +54,8 @@ def main_compito1():
     - Stampa delle caratteristiche della griglia.
     - Visualizzazione grafica della mappa generata.
     """
-    
-    try:
-        rows = int(input("Inserisci il numero di righe della griglia: "))
-        cols = int(input("Inserisci il numero di colonne della griglia: "))
-        
-        obstacle_ratio_input = input("Inserisci la percentuale di ostacoli (default: 20): ") or "20"
-        obstacle_ratio = int(obstacle_ratio_input) / 100.0
-        
-        if not (0 <= obstacle_ratio <= 1):
-            print("Percentuale non valida. Verrà usato il 20%.")
-            obstacle_ratio = 0.20
 
-    except ValueError:
-        print("Input non valido. Utilizzo valori di default (10x20, 20% ostacoli).")
-        rows, cols, obstacle_ratio = 10, 20, 0.20
+    rows, cols, obstacle_ratio = get_user_configuration()
 
     print("\nGenerazione della griglia in corso...")
     
