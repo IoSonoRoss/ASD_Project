@@ -6,7 +6,7 @@ import grid_generator
 import visualization
 from data_structures import Grid
 import closure_logic
-import path_logic # Necessario per calcola_distanza_libera
+import path_logic
 
 def main_compito2():
     """
