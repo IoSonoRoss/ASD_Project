@@ -65,6 +65,22 @@ def main_compito2():
 
     grid_data = grid_generator.generate_grid_map(rows=rows, cols=cols, obstacle_ratio=obstacle_ratio)
     grid = Grid.from_matrix(grid_data)
+
+    print("Generazione completata.")
+    
+    num_obstacles = sum(row.count(1) for row in grid_data)
+    total_cells = rows * cols
+    actual_ratio = (num_obstacles / total_cells) * 100 if total_cells > 0 else 0
+
+    print(f"\n--- Caratteristiche della Grid Map Generata ---")
+    print(f"  Dimensioni: {rows} righe x {cols} colonne ({total_cells} celle totali)")
+    print(f"  Ostacoli piazzati: {num_obstacles} (~{actual_ratio:.2f}%)")
+    print(f"  Celle attraversabili (nodi del grafo): {len(grid.adj)}")
+    print("-" * 45)
+    
+    print("\nVisualizzazione della mappa generata...")
+    visualization.visualizza_gridmap_pcolormesh(grid_data)
+
     print(f"\nGriglia {rows}x{cols} con {len(grid.adj)} celle attraversabili generata.")
     
     while True:
