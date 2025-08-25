@@ -6,10 +6,9 @@ def visualizza_gridmap_pcolormesh(grid):
     np_grid = np.array(grid)
     rows, cols = np_grid.shape
 
-    cmap = ListedColormap(['white', '#333399']) # Un blu facile da vedere
+    cmap = ListedColormap(['white', '#333399']) 
     fig, ax = plt.subplots()
 
-    # La logica corretta per pcolormesh
     x_coords = np.arange(cols + 1)
     y_coords = np.arange(rows + 1)
     ax.pcolormesh(x_coords, y_coords, np_grid, cmap=cmap, edgecolors='black', linewidth=1)
@@ -17,7 +16,7 @@ def visualizza_gridmap_pcolormesh(grid):
     ax.set_title("Griglia iniziale")
     ax.set_aspect('equal')
     ax.invert_yaxis()
-    ax.axis('off') # Rimuoviamo gli assi per chiarezza
+    ax.axis('off')
 
     plt.show()
 
@@ -32,23 +31,19 @@ def visualizza_risultato_finale(grid_da_mostrare, cmap, legend_elements, titolo)
     """
     np_grid = np.array(grid_da_mostrare)
     
-    fig, ax = plt.subplots(figsize=(14, 8)) # Aumentiamo le dimensioni per fare spazio alla legenda
+    fig, ax = plt.subplots(figsize=(14, 8)) 
 
-    # Usiamo pcolormesh per disegnare sia i colori che i bordi
     ax.pcolormesh(np_grid, cmap=cmap, edgecolors='black', linewidth=0.5)
 
     ax.set_title(titolo, fontsize=16)
     ax.set_aspect('equal')
     ax.invert_yaxis()
 
-    # Rimuoviamo gli assi numerici per una visualizzazione pulita
     ax.set_xticks([])
     ax.set_yticks([])
     
-    # Aggiungi la legenda al grafico
     ax.legend(handles=legend_elements, bbox_to_anchor=(1.02, 1), loc='upper left')
     
-    # Adatta il layout per assicurarsi che la legenda non venga tagliata
     plt.tight_layout()
     
     plt.show()

@@ -4,9 +4,8 @@ import math
 import heapq
 import closure_logic
 import path_logic
-from data_structures import Grid, State, PriorityQueue # Nuovi import
+from data_structures import Grid, State, PriorityQueue 
 
-# Variabile globale per il debug della destinazione
 D_globale = None
 memoization_cache = {}
 

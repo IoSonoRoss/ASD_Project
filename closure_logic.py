@@ -18,7 +18,6 @@ def calcola_contesto_e_complemento(grid: Grid, origin, forbidden_obstacles=froze
 
 def calcola_frontiera(grid: Grid, origin, contesto, complemento, forbidden_obstacles=frozenset()):
     """
-    [Versione Corretta]
     Calcola la frontiera escludendo esplicitamente l'origine del sottoproblema
     dall'essere una cella di frontiera.
     """
@@ -26,18 +25,14 @@ def calcola_frontiera(grid: Grid, origin, contesto, complemento, forbidden_obsta
     contesto_set = set(contesto)
     frontiera_con_tipo = []
     
-    # --- MODIFICA CHIAVE ---
-    # Le uniche candidate per essere celle di frontiera sono quelle nel contesto e nel complemento,
-    # MAI l'origine stessa.
     candidate_frontiera = set(contesto) | set(complemento)
     
     for cella_candidata in candidate_frontiera:
         # Per ogni candidato, controlliamo se ha almeno un vicino attraversabile FUORI dalla chiusura.
         for neighbor_pos in grid.get_neighbors(cella_candidata):
             if neighbor_pos not in chiusura and grid.is_traversable(neighbor_pos, forbidden_obstacles):
-                # Trovato! Questa cella candidata è una cella di frontiera.
                 tipo = 1 if cella_candidata in contesto_set else 2
                 frontiera_con_tipo.append((cella_candidata, tipo))
-                break # Passiamo al prossimo candidato, non serve controllare altri vicini.
+                break 
                 
     return frontiera_con_tipo
