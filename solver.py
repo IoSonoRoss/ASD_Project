@@ -114,7 +114,7 @@ class PathfindingSolver:
             new_forbidden_obstacles = forbidden_obstacles.union(current_closure)
             
             # Chiamata ricorsiva
-            len_fd, seq_fd = self._cammino_min_ricorsivo(
+            len_fd, seq_fd = self.cammino_min_ricorsivo(
                 f_pos, current_dest, new_forbidden_obstacles, depth + 1
             )
             
