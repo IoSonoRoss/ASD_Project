@@ -6,10 +6,9 @@ def visualizza_gridmap_pcolormesh(grid):
     np_grid = np.array(grid)
     rows, cols = np_grid.shape
 
-    cmap = ListedColormap(['white', '#333399']) # Un blu facile da vedere
+    cmap = ListedColormap(['white', '#333399']) 
     fig, ax = plt.subplots()
 
-    # La logica corretta per pcolormesh
     x_coords = np.arange(cols + 1)
     y_coords = np.arange(rows + 1)
     ax.pcolormesh(x_coords, y_coords, np_grid, cmap=cmap, edgecolors='black', linewidth=1)
@@ -17,7 +16,7 @@ def visualizza_gridmap_pcolormesh(grid):
     ax.set_title("Griglia iniziale")
     ax.set_aspect('equal')
     ax.invert_yaxis()
-    ax.axis('off') # Rimuoviamo gli assi per chiarezza
+    ax.axis('off') 
 
     plt.show()
 

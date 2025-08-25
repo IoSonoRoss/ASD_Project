@@ -7,18 +7,14 @@ def generate_grid_map(rows=10, cols=20, obstacle_ratio=0.2):
     """
 
     grid = [[0 for _ in range(cols)] for _ in range(rows)]
-    
-    # Calcola il numero di ostacoli da piazzare basandosi solo sul rapporto
+ 
     total_cells = rows * cols
     num_obstacles_to_place = int(total_cells * obstacle_ratio)
 
-    # Assicurati di non tentare di piazzare più ostacoli delle celle disponibili
     if num_obstacles_to_place >= total_cells:
-        # Se il rapporto è 1.0 o più, restituisci una griglia piena
         return [[1 for _ in range(cols)] for _ in range(rows)]
         
     placed_obstacles = 0
-    # Evita un ciclo infinito se la griglia è quasi piena
     max_attempts = total_cells * 3
     attempts = 0
     while placed_obstacles < num_obstacles_to_place and attempts < max_attempts:
@@ -29,7 +25,6 @@ def generate_grid_map(rows=10, cols=20, obstacle_ratio=0.2):
             placed_obstacles += 1
         attempts += 1
     
-    # Se il ciclo si interrompe per troppi tentativi, avvisa l'utente
     if attempts >= max_attempts:
         print(f"Attenzione: non è stato possibile piazzare tutti i {num_obstacles_to_place} ostacoli richiesti.")
         print(f"Ostacoli piazzati: {placed_obstacles}")

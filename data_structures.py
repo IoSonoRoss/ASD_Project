@@ -9,7 +9,7 @@ class Grid:
     def __init__(self, rows, cols):
         self.rows = rows
         self.cols = cols
-        self.adj = {} # La nostra lista di adiacenze
+        self.adj = {} 
 
     @classmethod
     def from_matrix(cls, grid_data):
@@ -22,33 +22,28 @@ class Grid:
         
         grid = cls(rows, cols)
 
-        # 1. Aggiungi tutti i nodi attraversabili alla lista di adiacenze
         obstacles = set()
         for r in range(rows):
             for c in range(cols):
                 if grid_data[r][c] == 1:
                     obstacles.add((r, c))
                 else:
-                    grid.adj[(r, c)] = {} # Inizializza un dizionario vuoto per i vicini
+                    grid.adj[(r, c)] = {} 
 
-        # 2. Popola i vicini per ogni nodo attraversabile
         moves = {
             "cardinal": [(-1, 0), (1, 0), (0, -1), (0, 1)],
             "diagonal": [(-1, -1), (-1, 1), (1, -1), (1, 1)]
         }
         
         for r_curr, c_curr in grid.adj.keys():
-            # Mosse Cardinali
             for dr, dc in moves["cardinal"]:
                 nr, nc = r_curr + dr, c_curr + dc
-                if (nr, nc) in grid.adj: # Se il vicino è una cella valida e non un ostacolo
+                if (nr, nc) in grid.adj: 
                     grid.adj[(r_curr, c_curr)][(nr, nc)] = 1.0
 
-            # Mosse Diagonali
             for dr, dc in moves["diagonal"]:
                 nr, nc = r_curr + dr, c_curr + dc
                 if (nr, nc) in grid.adj:
-                    # Regola per l'attraversamento degli spigoli: consentito
                     grid.adj[(r_curr, c_curr)][(nr, nc)] = math.sqrt(2)
         
         return grid
@@ -80,17 +75,13 @@ class Grid:
         :param default_free_val: Il valore numerico per le celle libere.
         :return: Una lista di liste (matrice numerica).
         """
-        # 1. Crea una matrice piena del valore degli ostacoli
         matrix = [[default_obstacle_val for _ in range(self.cols)] for _ in range(self.rows)]
         
-        # 2. Per ogni cella attraversabile (le chiavi di adj), imposta il valore di default per le celle libere
         for r, c in self.adj.keys():
             matrix[r][c] = default_free_val
             
-        # 3. Se sono stati forniti valori personalizzati, applicali
         if custom_values:
             for (r, c), value in custom_values.items():
-                # Assicurati che le coordinate siano valide prima di scrivere
                 if 0 <= r < self.rows and 0 <= c < self.cols:
                     matrix[r][c] = value
                     
