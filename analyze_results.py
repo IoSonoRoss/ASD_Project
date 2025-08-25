@@ -31,7 +31,7 @@ def analyze_and_plot(df):
     print(df.head())
     print(f"\nTotale run analizzate: {len(df)}")
     
-    # --- ANALISI DI CORRETTEZZA (Sempre importante) ---
+    # --- ANALISI DI CORRETTEZZA ---
     num_inconsistent = len(df[df['correttezza_superata'] == False])
     if num_inconsistent > 0:
         print(f"\nATTENZIONE: Trovati {num_inconsistent} run con risultati di lunghezza O->D e D->O non consistenti!")
