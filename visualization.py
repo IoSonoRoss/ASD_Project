@@ -3,6 +3,9 @@ import numpy as np
 from matplotlib.colors import ListedColormap
 
 def visualizza_gridmap_pcolormesh(grid):
+    """
+    Visualizza la mappa a griglia utilizzando pcolormesh di Matplotlib.
+    """
     np_grid = np.array(grid)
     rows, cols = np_grid.shape
 

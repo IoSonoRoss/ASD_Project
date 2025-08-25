@@ -60,7 +60,7 @@ class Grid:
         return self.adj.get(coords, {})
 
     def is_within_bounds(self, coords):
-        """Controlla se una coordinata è dentro i limiti della griglia."""
+        """Controlla se le coordinate sono entro i limiti della griglia."""
         r, c = coords
         return 0 <= r < self.rows and 0 <= c < self.cols
     
@@ -69,8 +69,7 @@ class Grid:
         Converte la rappresentazione interna (lista di adiacenze) in una
         matrice numerica, adatta per la stampa o la visualizzazione.
 
-        :param custom_values: Un dizionario opzionale {coord: valore} per
-                              colorare celle specifiche (es. Origine, Frontiera).
+        :param custom_values: Un dizionario opzionale {coord: valore} per colorare celle specifiche (es. Origine, Frontiera).
         :param default_obstacle_val: Il valore numerico per gli ostacoli.
         :param default_free_val: Il valore numerico per le celle libere.
         :return: Una lista di liste (matrice numerica).

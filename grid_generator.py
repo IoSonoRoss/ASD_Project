@@ -5,7 +5,6 @@ def generate_grid_map(rows=10, cols=20, obstacle_ratio=0.2):
     Genera una mappa a griglia con ostacoli,
     basandosi esclusivamente su una percentuale.
     """
-
     grid = [[0 for _ in range(cols)] for _ in range(rows)]
  
     total_cells = rows * cols
