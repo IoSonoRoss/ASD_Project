@@ -9,17 +9,13 @@ def is_path_free(grid: Grid, path, forbidden_obstacles=frozenset()):
     """
     if not path:
         return False
-    # Controlliamo tutte le celle del percorso, inclusa l'origine.
     for coords in path:
         if not grid.is_traversable(coords, forbidden_obstacles):
             return False
     return True
 
 def generate_path_coordinates(origin, destination, diagonal_first):
-    # Questa funzione è puramente geometrica, non interagisce con la griglia
-    # quindi rimane invariata.
     path = [origin]
-    # ... codice invariato ...
     r_curr, c_curr = origin
     r_dest, c_dest = destination
     delta_r, delta_c = r_dest - r_curr, c_dest - c_curr
@@ -52,9 +48,7 @@ def generate_path_coordinates(origin, destination, diagonal_first):
 
 
 def calcola_distanza_libera(origin, destination):
-    # Funzione puramente matematica, rimane invariata.
     if not origin or not destination: return float('inf')
-    # ... codice invariato ...
     delta_x = abs(origin[1] - destination[1])
     delta_y = abs(origin[0] - destination[0])
     delta_min, delta_max = min(delta_x, delta_y), max(delta_x, delta_y)

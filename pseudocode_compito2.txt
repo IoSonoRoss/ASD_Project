@@ -1,0 +1,93 @@
+#Nel compito 2 vengono sfruttate parti dello pseudocodice del compito 1
+
+calcola_contesto_e_complemento(grid, origin, forbidden_obstacles):
+
+    contesto = []
+    complemento = []
+
+    for each destination in grid.adj.keys():
+        
+        if destination == origin:
+            continua con la prossima iterazione
+
+        path_t1 = genera_coordinate_percorso(origin, destination, True)
+
+        if percorso_libero(grid, path_t1, forbidden_obstacles):
+            aggiungi destination a contesto
+        else:
+            path_t2 = genera_coordinate_percorso(origin, destination, False)
+
+            if percorso_libero(grid, path_t2, forbidden_obstacles) AND path_t1 != path_t2:
+                   aggiungi destination a complemento
+
+    return (contesto, complemento)
+
+is_path_free(grid, path, forbidden_obstacles):
+
+    if path == []:
+        return False
+
+    for each coords in path:
+        if grid.is_traversable(coords, forbidden_obstacles) == False:
+            return False
+
+    return True
+
+generate_path_coordinates(origin, destination, diagonal_first):
+
+    path = [origin]
+    (r_curr, c_curr) = origin
+    (r_dest, c_dest) = destination
+
+    delta_r = r_dest - r_curr
+    delta_c = c_dest - c_curr
+
+    num_diag = min( |delta_r| , |delta_c| )
+    num_rect = | |delta_r| - |delta_c| |
+
+    step_r = sign(delta_r)
+    step_c = sign(delta_c)
+
+    if |delta_r| > |delta_c|:
+        rect_step_r = step_r
+        rect_step_c = 0
+    else:
+        rect_step_r = 0
+        rect_step_c = step_c
+
+    make_diag_moves():
+        do num_diag volte:
+            r_curr = r_curr + step_r
+            c_curr = c_curr + step_c
+            aggiungi (r_curr, c_curr) a path
+
+    make_rect_moves():
+        do num_rect volte:
+            r_curr = r_curr + rect_step_r
+            c_curr = c_curr + rect_step_c
+            aggiungi (r_curr, c_curr) a path
+
+    if diagonal_first == TRUE:
+        make_diag_moves()
+        make_rect_moves()
+    else:
+        make_rect_moves()
+        make_diag_moves()
+
+    return path
+
+calcola_distanza_libera(origin, destination):
+
+    if !origin OR !destination:
+        return inf
+
+    delta_x = | origin.colonna - destination.colonna |
+    delta_y = | origin.riga - destination.riga |
+
+    delta_min = min(delta_x, delta_y)
+    delta_max =max(delta_x, delta_y)
+
+    distanza = sqrt(2) * delta_min + (delta_max - delta_min)
+
+    return distanza
+
