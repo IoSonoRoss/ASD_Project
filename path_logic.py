@@ -25,9 +25,9 @@ def generate_path_coordinates(origin, destination, diagonal_first):
     Genera una lista di coordinate che rappresentano un percorso dalla cella origine alla destinazione su una griglia.
     Il percorso consiste in mosse diagonali e rettilinee (orizzontali/verticali), con la possibilità di dare priorità alle mosse diagonali.
     Args:
-        origine (tuple[int, int]): La coordinata di partenza come (riga, colonna).
-        destinazione (tuple[int, int]): La coordinata di arrivo come (riga, colonna).
-        diagonale_prima (bool): Se True, le mosse diagonali vengono effettuate prima di quelle rettilinee; altrimenti il contrario.
+        origin (tuple[int, int]): La coordinata di partenza come (riga, colonna).
+        destination (tuple[int, int]): La coordinata di arrivo come (riga, colonna).
+        diagonal_first(bool): Se True, le mosse diagonali vengono effettuate prima di quelle rettilinee; altrimenti il contrario.
     Returns:
         list[tuple[int, int]]: Una lista di coordinate che rappresentano il percorso da origine a destinazione, inclusi gli estremi.
     """
