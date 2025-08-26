@@ -1,0 +1,4 @@
+rows,execution_time_OD,recursive_calls_OD,cache_hits_OD,total_unique_frontiers_OD,pruning_successes_OD,max_recursion_depth_OD
+10,0.0011,2.0000,0.0000,7.4000,6.4000,1.4000
+15,0.0203,19.8000,2.4000,54.0000,70.0000,2.6000
+20,0.8294,400.6667,19.3333,156.6667,1348.6667,5.6667
