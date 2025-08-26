@@ -56,7 +56,7 @@ def main_compito2():
     """
     Script principale per dimostrare le funzionalita del Compito 2:
     - Generazione di una griglia.
-    - Calcolo di Contesto, Complemento e Frontiera per un'origine data.
+    - Calcolo di Contesto e Complemento per un'origine data.
     - Calcolo della distanza libera tra due punti.
     - Visualizzazione grafica dei risultati.
     """
