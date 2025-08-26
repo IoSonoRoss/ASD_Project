@@ -41,17 +41,18 @@ def run_single_run(grid_data, origin, destination):
     results = {}
 
     # --- Test O -> D ---
-    print(f"    Esecuzione CAMMINOMIN({origin}, {destination})...")
+    # Non stampiamo piu' il log dettagliato per velocizzare gli esperimenti
+    # print(f"    Esecuzione CAMMINOMIN({origin}, {destination})...")
     solver_od = PathfindingSolver(grid_data, origin, destination)
-    solver_od.solve() 
+    solver_od.solve(debug=False) # Aggiungiamo un flag per disabilitare le stampe
     stats_od = solver_od.get_stats_summary()
     results['lunghezza_OD'] = solver_od.lunghezza_minima
     results.update({f"{key}_OD": val for key, val in stats_od.items()})
 
     # --- Test D -> O (Correttezza) ---
-    print(f"    Esecuzione CAMMINOMIN({destination}, {origin})...")
+    # print(f"    Esecuzione CAMMINOMIN({destination}, {origin})...")
     solver_do = PathfindingSolver(grid_data, destination, origin)
-    solver_do.solve()
+    solver_do.solve(debug=False)
     stats_do = solver_do.get_stats_summary()
     results['lunghezza_DO'] = solver_do.lunghezza_minima
     results.update({f"{key}_DO": val for key, val in stats_do.items()})
@@ -65,30 +66,36 @@ def run_single_run(grid_data, origin, destination):
 def main(args):
     """Script principale per l'esecuzione degli esperimenti."""
     
-    scenari_dimensione = [
-        {"rows": 10, "cols": 10, "obstacle_ratio": 0.25, "num_runs": 5},
-        {"rows": 15, "cols": 15, "obstacle_ratio": 0.25, "num_runs": 5},
-        {"rows": 20, "cols": 20, "obstacle_ratio": 0.25, "num_runs": 3},
-        {"rows": 25, "cols": 25, "obstacle_ratio": 0.25, "num_runs": 2},
-    ]
-    scenari_ostacoli = [
-        {"rows": 20, "cols": 20, "obstacle_ratio": 0.15, "num_runs": 5},
-        {"rows": 20, "cols": 20, "obstacle_ratio": 0.30, "num_runs": 5},
-        {"rows": 20, "cols": 20, "obstacle_ratio": 0.45, "num_runs": 3},
-    ]
-    scenari_stress_test = [
-        {"rows": 30, "cols": 30, "obstacle_ratio": 0.28, "num_runs": 3},
-    ]
-    scenario_map = {"dimensione": scenari_dimensione, "ostacoli": scenari_ostacoli, "stress_test": scenari_stress_test}
-
+    # --- DEFINIZIONE DEGLI SCENARI DI TEST (FINALI) ---
+    TEST_SUITES = {
+        "dimensione": [
+            {"rows": 10, "cols": 10, "obstacle_ratio": 0.20, "num_runs": 10}, # config_index 0
+            {"rows": 15, "cols": 15, "obstacle_ratio": 0.20, "num_runs": 5},  # config_index 1
+            {"rows": 20, "cols": 20, "obstacle_ratio": 0.20, "num_runs": 3},  # config_index 2
+        ],
+        "ostacoli": [
+            # Gamma fitta di percentuali su griglia 15x15 per trovare la soglia critica
+            {"rows": 15, "cols": 15, "obstacle_ratio": 0.10, "num_runs": 10}, # config_index 0
+            {"rows": 15, "cols": 15, "obstacle_ratio": 0.15, "num_runs": 10}, # config_index 1
+            {"rows": 15, "cols": 15, "obstacle_ratio": 0.20, "num_runs": 10}, # config_index 2
+            {"rows": 15, "cols": 15, "obstacle_ratio": 0.25, "num_runs": 10}, # config_index 3
+            {"rows": 15, "cols": 15, "obstacle_ratio": 0.30, "num_runs": 10}, # config_index 4
+            {"rows": 15, "cols": 15, "obstacle_ratio": 0.35, "num_runs": 10}, # config_index 5
+            {"rows": 15, "cols": 15, "obstacle_ratio": 0.40, "num_runs": 10}, # config_index 6
+            {"rows": 15, "cols": 15, "obstacle_ratio": 0.45, "num_runs": 10}, # config_index 7
+            {"rows": 15, "cols": 15, "obstacle_ratio": 0.50, "num_runs": 10}, # config_index 8
+        ]
+    }
+    
     test_type = args.test_type
     config_index = args.config_index
     
-    if test_type not in scenario_map or not (0 <= config_index < len(scenario_map[test_type])):
+    if test_type not in TEST_SUITES or not (0 <= config_index < len(TEST_SUITES[test_type])):
         print(f"Errore: tipo di test '{test_type}' o indice '{config_index}' non validi.")
+        print(f"Tipi validi: {list(TEST_SUITES.keys())}")
         return
 
-    config = scenario_map[test_type][config_index]
+    config = TEST_SUITES[test_type][config_index]
     config['id_scenario'] = f"{test_type}_{config_index}"
     
     lista_risultati_run = []
@@ -118,7 +125,6 @@ def main(args):
         os.makedirs(output_dir, exist_ok=True)
         output_filename = os.path.join(output_dir, f"results_{config['id_scenario']}.csv")
         
-        # Scrittura del CSV
         fieldnames = list(lista_risultati_run[0].keys())
         file_exists = os.path.exists(output_filename)
 
