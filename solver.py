@@ -46,7 +46,6 @@ class PathfindingSolver:
             "max_recursion_depth": 0
         }
 
-        # Resetta la cache solo se stiamo per usarla
         if use_cache:
             self.memoization_cache = {}
 
@@ -88,7 +87,6 @@ class PathfindingSolver:
             print(f"{indent}║ Ostacoli Proibiti: {len(forbidden_obstacles)} elementi")
         
         cache_key = (current_origin, current_dest, forbidden_obstacles)
-        # Controlla la cache solo se l'opzione e' attiva
         if use_cache and cache_key in self.memoization_cache:
             self.stats["cache_hits"] += 1
             if debug:
@@ -151,7 +149,6 @@ class PathfindingSolver:
             if debug:
                 print(f"{indent}║ ({i+1}/{len(frontiera)}) Esamino F={f_pos} (tipo {f_type}). Costo O->F: {len_of:.2f}")
 
-            # Esegui il pruning solo se l'opzione e' attiva
             if use_pruning and (len_of + path_logic.calcola_distanza_libera(f_pos, current_dest) >= best_len_locale):
                 self.stats["pruning_successes"] += 1
                 if debug:
@@ -183,18 +180,37 @@ class PathfindingSolver:
             print(f"{indent}║ Salvo in CACHE e ritorno.")
             print(f"{indent}╚══════════════════════════════════════════════════════")
         
-        # Salva in cache solo se l'opzione e' attiva
         if use_cache:
             self.memoization_cache[cache_key] = (best_len_locale, best_seq_locale)
         return best_len_locale, best_seq_locale
     
     def get_stats_summary(self):
+        """
+        Ritorna un summary delle statistiche correnti.
+
+        Questo metodo crea una copia di un dizionario delle 'stats' interne lo aggiorna con:
+            - "total_unique_frontiers": il conto di frontiere uniche incontrate.
+            - "max_recursion_depth": la massima profondità ricorsiva raggiunta, incrementata di uno.
+        Returns:
+            dict: un dizionario contenente le statistiche riassunte.
+        """
         summary = self.stats.copy()
         summary["total_unique_frontiers"] = len(self.stats["total_unique_frontiers"])
         summary["max_recursion_depth"] = self.stats["max_recursion_depth"] + 1
         return summary
 
     def display_results(self):
+        """Visualizza i risultati del calcolo del cammino minimo.
+           Se la destinazione non è raggiungibile dall'origine, stampa un messaggio.
+           Altrimenti, mostra la lunghezza minima e la sequenza di landmark attraversati,
+           includendo le etichette e i tipi.
+           L'output include:
+                - Un messaggio se la destinazione non è raggiungibile.
+                - La lunghezza del cammino minimo, formattata a quattro decimali.
+                - La sequenza di landmark come lista di tuple (etichetta, tipo), dove l'etichetta è
+                'O' per l'origine, 'D' per la destinazione, oppure recuperata dal label manager
+                per gli altri landmark.
+        """
         if self.lunghezza_minima == float('inf'):
             print("\nRISULTATO: La destinazione D non è raggiungibile da O.")
             return
@@ -209,6 +225,9 @@ class PathfindingSolver:
         print(f"  Sequenza di landmark: {output_str.strip()}>")
 
     def visualize_initial_closure_and_frontier(self):
+        """
+        Visualizza la chiusura e la frontiera del problema INIZIALE (partendo da O).
+        """
         contesto_O, complemento_O = closure_logic.calcola_contesto_e_complemento(self.grid, self.origin)
         frontiera_O_con_tipo = closure_logic.calcola_frontiera(self.grid, self.origin, contesto_O, complemento_O)
         CELL_CONTESTO, CELL_COMPLEMENTO, CELL_ORIGINE, CELL_FRONTIERA, CELL_DESTINAZIONE = 2, 3, 4, 5, 6

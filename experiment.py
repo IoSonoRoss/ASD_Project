@@ -6,7 +6,6 @@ import math
 import os
 import csv
 
-# Importa i moduli del progetto refattorizzato
 import grid_generator
 from solver import PathfindingSolver
 from data_structures import Grid
@@ -32,8 +31,18 @@ def select_od_pair(grid_obj: Grid):
         return random.sample(free_cells, 2)
 
 def run_single_run(grid_data, origin, destination, use_cache=True, use_pruning=True):
+    """
+    Esegue una singola esecuzione dell’algoritmo di ricerca del percorso sulla griglia fornita, dalla posizione di partenza a quella di destinazione.
+        Argomenti:
+            - grid_data (Any): La rappresentazione della griglia o mappa su cui eseguire il pathfinding.
+            - origin (Any): Il punto di partenza per l’algoritmo di ricerca del percorso.
+            - destination (Any): Il punto di arrivo per l’algoritmo di ricerca del percorso.
+            - use_cache (bool, opzionale): Indica se utilizzare la cache per velocizzare i calcoli. Default è True.
+            - use_pruning (bool, opzionale): Indica se applicare tecniche di pruning per ottimizzare la ricerca. Default è True.
+        Returns
+            - dict: Un dizionario contenente la lunghezza minima del percorso ('lunghezza') e statistiche aggiuntive ottenute dal solver.
+    """
     solver = PathfindingSolver(grid_data, origin, destination)
-    # Passiamo i flag per le ottimizzazioni
     solver.solve(debug=False, use_cache=use_cache, use_pruning=use_pruning)
     stats = solver.get_stats_summary()
     results = {'lunghezza': solver.lunghezza_minima}
@@ -43,7 +52,6 @@ def run_single_run(grid_data, origin, destination, use_cache=True, use_pruning=T
 def main(args):
     """Script principale per l'esecuzione degli esperimenti."""
     
-    # --- DEFINIZIONE DEGLI SCENARI DI TEST (FINALI) ---
     TEST_SUITES = {
         "dimensione": [
             {"rows": 5, "cols": 5, "obstacle_ratio": 0.20, "num_runs": 20}, # config_index 0
@@ -56,7 +64,6 @@ def main(args):
             {"rows": 20, "cols": 20, "obstacle_ratio": 0.20, "num_runs": 10},  # config_index 7
         ],
         "ostacoli": [
-            # Gamma fitta di percentuali su griglia 15x15 per trovare la soglia critica
             {"rows": 15, "cols": 15, "obstacle_ratio": 0.10, "num_runs": 10}, # config_index 0
             {"rows": 15, "cols": 15, "obstacle_ratio": 0.15, "num_runs": 10}, # config_index 1
             {"rows": 15, "cols": 15, "obstacle_ratio": 0.20, "num_runs": 10}, # config_index 2
@@ -67,7 +74,6 @@ def main(args):
             {"rows": 15, "cols": 15, "obstacle_ratio": 0.45, "num_runs": 10}, # config_index 7
             {"rows": 15, "cols": 15, "obstacle_ratio": 0.50, "num_runs": 10}, # config_index 8
         ],
-        # --- NUOVA SUITE PER IL CONFRONTO ---
         "confronto": [
             {"rows": 10, "cols": 10, "obstacle_ratio": 0.20, "num_runs": 10}, # config_index 0
             {"rows": 15, "cols": 15, "obstacle_ratio": 0.20, "num_runs": 5},  # config_index 1
@@ -103,24 +109,17 @@ def main(args):
             print("    ERRORE: Griglia troppo piena per trovare una coppia O, D. Run saltato.")
             continue
 
-        # --- LOGICA DI ESECUZIONE SPECIFICA PER TIPO DI TEST ---
         if test_type == 'confronto':
-            # Esegui versione OTTIMIZZATA
             risultati_opt = run_single_run(grid_data, origin, destination, use_cache=True, use_pruning=True)
-            # --- MODIFICA CHIAVE QUI ---
-            # Aggiungiamo il suffisso _OD per coerenza
             record_opt = {**config, "run_num": i+1, "origin": origin, "destination": destination, "type": "ottimizzato"}
-            record_opt.update({f"{k}_OD": v for k, v in risultati_opt.items()}) # Aggiunge suffisso _OD
+            record_opt.update({f"{k}_OD": v for k, v in risultati_opt.items()}) 
             lista_risultati_run.append(record_opt)
             
-            # Esegui versione NAIVE
             risultati_naive = run_single_run(grid_data, origin, destination, use_cache=False, use_pruning=False)
-            # --- MODIFICA CHIAVE QUI ---
             record_naive = {**config, "run_num": i+1, "origin": origin, "destination": destination, "type": "naive"}
-            record_naive.update({f"{k}_OD": v for k, v in risultati_naive.items()}) # Aggiunge suffisso _OD
+            record_naive.update({f"{k}_OD": v for k, v in risultati_naive.items()}) 
             lista_risultati_run.append(record_naive)
         else:
-            # Esecuzione standard con test di correttezza O->D e D->O
             solver_od = PathfindingSolver(grid_data, origin, destination)
             solver_od.solve(debug=False)
             stats_od = solver_od.get_stats_summary()

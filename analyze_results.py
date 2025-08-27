@@ -40,10 +40,6 @@ def analyze_and_plot(df):
     analysis_output_dir = "analysis_results"
     os.makedirs(analysis_output_dir, exist_ok=True)
 
-    # --- Pre-processing dei dati ---
-    # Questa sezione si applica a tutti i dati, ma alcune colonne potrebbero non esistere
-    # in tutti i file (es. i file di confronto non hanno 'correttezza_superata').
-    # Gestiamo questi casi con dei controlli.
     if 'origin' in df.columns:
         df['origin'] = df['origin'].apply(lambda x: ast.literal_eval(str(x)))
     if 'destination' in df.columns:
@@ -51,7 +47,6 @@ def analyze_and_plot(df):
     if 'origin' in df.columns and 'destination' in df.columns:
         df['dlib'] = df.apply(lambda row: calcola_distanza_libera(row['origin'], row['destination']), axis=1)
 
-    # --- ANALISI DI CORRETTEZZA (solo se la colonna esiste) ---
     if 'correttezza_superata' in df.columns:
         num_inconsistent = len(df[df['correttezza_superata'] == False])
         if num_inconsistent > 0:
@@ -59,7 +54,6 @@ def analyze_and_plot(df):
         else:
             print("\nVerifica di coerenza superata: Tutti i run sono consistenti.")
     
-    # --- GRAFICI SULLA SCALABILITA' (SUITE 'dimensione') ---
     df_dimensione = df[df['id_scenario'].str.startswith('dimensione', na=False)].copy()
     if not df_dimensione.empty:
         colonne_da_mediare = [
@@ -75,13 +69,11 @@ def analyze_and_plot(df):
         avg_dimensione.to_csv(table_filename_dim, index=False, float_format='%.4f')
         print(f"Tabella di analisi sulla dimensione salvata in: {table_filename_dim}")
 
-        # Generazione grafici dimensione (codice invariato)
         plt.figure(figsize=(10, 6)); plt.plot(avg_dimensione['rows'], avg_dimensione['execution_time_OD'], marker='o'); plt.title('Tempo Medio di Esecuzione vs. Dimensione Griglia'); plt.xlabel('Dimensione (N)'); plt.ylabel('Tempo (secondi)'); plt.grid(True); plt.savefig(os.path.join(analysis_output_dir, "grafico_1_tempo_vs_dimensione.png")); plt.show()
         fig, ax1 = plt.subplots(figsize=(10, 6)); ax1.plot(avg_dimensione['rows'], avg_dimensione['recursive_calls_OD'], marker='s', color='tab:blue', label='Chiamate Ricorsive'); ax1.set_xlabel('Dimensione (N)'); ax1.set_ylabel('Numero Medio Chiamate Ricorsive', color='tab:blue'); ax2 = ax1.twinx(); ax2.plot(avg_dimensione['rows'], avg_dimensione['cache_hits_OD'], marker='^', color='tab:green', linestyle='--', label='Cache Hits'); ax2.set_ylabel('Numero Medio Cache Hits', color='tab:green'); plt.title('Lavoro Algoritmo e Efficacia Cache vs. Dimensione'); fig.legend(loc="upper left", bbox_to_anchor=(0.1,0.9)); plt.savefig(os.path.join(analysis_output_dir, "grafico_2_lavoro_vs_dimensione.png")); plt.show()
         if 'dlib' in df_dimensione.columns:
             plt.figure(figsize=(10, 6)); plt.scatter(df_dimensione['dlib'], df_dimensione['execution_time_OD'], alpha=0.5); plt.title('Correlazione tra Distanza Libera e Tempo di Esecuzione'); plt.xlabel('Distanza Libera (dlib)'); plt.ylabel('Tempo di Esecuzione (secondi)'); plt.grid(True); plt.savefig(os.path.join(analysis_output_dir, "grafico_3_correlazione_distanza_tempo.png")); plt.show()
 
-    # --- GRAFICI SULL'IMPATTO DEGLI OSTACOLI (SUITE 'ostacoli') ---
     df_ostacoli = df[df['id_scenario'].str.startswith('ostacoli', na=False)].copy()
     if not df_ostacoli.empty:
         df_ostacoli['success'] = (df_ostacoli['lunghezza_OD'] != np.inf).astype(int)
@@ -95,28 +87,22 @@ def analyze_and_plot(df):
         avg_ostacoli.to_csv(table_filename_obs, index=False, float_format='%.4f')
         print(f"Tabella di analisi sugli ostacoli salvata in: {table_filename_obs}")
         
-        # Generazione grafici ostacoli (codice invariato)
         plt.figure(figsize=(10, 6)); plt.plot(avg_ostacoli['obstacle_ratio'] * 100, avg_ostacoli['execution_time_OD'], marker='o', color='red'); plt.title('Tempo Medio di Esecuzione vs. Densità Ostacoli (15x15)'); plt.xlabel('Percentuale di Ostacoli (%)'); plt.ylabel('Tempo Medio (secondi)'); plt.grid(True); plt.savefig(os.path.join(analysis_output_dir, "grafico_4_tempo_vs_ostacoli.png")); plt.show()
         plt.figure(figsize=(10, 6)); plt.plot(avg_ostacoli['obstacle_ratio'] * 100, avg_ostacoli['success'] * 100, marker='o', color='teal'); plt.title('Probabilità di Successo vs. Densità Ostacoli (15x15)'); plt.xlabel('Percentuale di Ostacoli (%)'); plt.ylabel('Percentuale di Run con Soluzione (%)'); plt.grid(True); plt.ylim(0, 105); plt.savefig(os.path.join(analysis_output_dir, "grafico_5_successo_vs_ostacoli.png")); plt.show()
         plt.figure(figsize=(10, 6)); plt.plot(avg_ostacoli['obstacle_ratio'] * 100, avg_ostacoli['max_recursion_depth_OD'], marker='D', color='purple'); plt.title('Profondità Media della Ricerca vs. Densità Ostacoli (15x15)'); plt.xlabel('Percentuale di Ostacoli (%)'); plt.ylabel('Profondità Massima Media'); plt.grid(True); plt.savefig(os.path.join(analysis_output_dir, "grafico_6_profondita_vs_ostacoli.png")); plt.show()
 
-    # --- NUOVO: GRAFICO DI CONFRONTO (SUITE 'confronto') ---
     df_confronto = df[df['id_scenario'].str.startswith('confronto', na=False)].copy()
     if not df_confronto.empty:
-        # Calcola la media dei tempi per ogni dimensione e tipo (ottimizzato vs. naive)
         avg_confronto_series = df_confronto.groupby(['rows', 'type'])['execution_time'].mean()
         avg_confronto_df = avg_confronto_series.unstack()
 
         print("\n--- Dati Medi per Test di Confronto ---")
         print(avg_confronto_df)
 
-        # --- NUOVO: ESPORTA LA TABELLA DI CONFRONTO SU CSV ---
         table_filename_comp = os.path.join(analysis_output_dir, "tabella_analisi_confronto.csv")
-        # Usiamo .to_csv() direttamente sul DataFrame pivotato
-        avg_confronto_df.to_csv(table_filename_comp, float_format='%.6f') # Usiamo piu decimali per i tempi piccoli
+        avg_confronto_df.to_csv(table_filename_comp, float_format='%.6f') 
         print(f"Tabella di analisi sul confronto salvata in: {table_filename_comp}")
         
-        # --- Logica di plotting (rimane invariata) ---
         colori = {
             'naive': '#C70039',
             'ottimizzato': '#1E8449'

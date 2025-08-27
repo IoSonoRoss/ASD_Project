@@ -39,17 +39,14 @@ class Grid:
         }
         
         for r_curr, c_curr in grid.adj.keys():
-            # Mosse Cardinali
             for dr, dc in moves["cardinal"]:
                 nr, nc = r_curr + dr, c_curr + dc
-                if (nr, nc) in grid.adj: # Se il vicino è una cella valida e non un ostacolo
+                if (nr, nc) in grid.adj: 
                     grid.adj[(r_curr, c_curr)][(nr, nc)] = 1.0
 
-            # Mosse Diagonali
             for dr, dc in moves["diagonal"]:
                 nr, nc = r_curr + dr, c_curr + dc
                 if (nr, nc) in grid.adj:
-                    # Regola per l'attraversamento degli spigoli: consentito
                     grid.adj[(r_curr, c_curr)][(nr, nc)] = math.sqrt(2)
         
         return grid
@@ -81,17 +78,13 @@ class Grid:
         :param default_free_val: Il valore numerico per le celle libere.
         :return: Una lista di liste (matrice numerica).
         """
-        # 1. Crea una matrice piena del valore degli ostacoli
         matrix = [[default_obstacle_val for _ in range(self.cols)] for _ in range(self.rows)]
         
-        # 2. Per ogni cella attraversabile (le chiavi di adj), imposta il valore di default per le celle libere
         for r, c in self.adj.keys():
             matrix[r][c] = default_free_val
             
-        # 3. Se sono stati forniti valori personalizzati, applicali
         if custom_values:
             for (r, c), value in custom_values.items():
-                # Assicurati che le coordinate siano valide prima di scrivere
                 if 0 <= r < self.rows and 0 <= c < self.cols:
                     matrix[r][c] = value
                     
