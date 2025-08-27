@@ -74,9 +74,9 @@ def main(args):
             {"rows": 9, "cols": 9, "obstacle_ratio": 0.20, "num_runs": 20}, # config_index 2
             {"rows": 10, "cols": 10, "obstacle_ratio": 0.20, "num_runs": 10}, # config_index 3
             {"rows": 12, "cols": 12, "obstacle_ratio": 0.20, "num_runs": 10}, # config_index 4
-            {"rows": 15, "cols": 15, "obstacle_ratio": 0.20, "num_runs": 5},  # config_index 5
-            {"rows": 17, "cols": 17, "obstacle_ratio": 0.20, "num_runs": 5}, # config_index 6
-            {"rows": 20, "cols": 20, "obstacle_ratio": 0.20, "num_runs": 3},  # config_index 7
+            {"rows": 15, "cols": 15, "obstacle_ratio": 0.20, "num_runs": 10},  # config_index 5
+            {"rows": 17, "cols": 17, "obstacle_ratio": 0.20, "num_runs": 10}, # config_index 6
+            {"rows": 20, "cols": 20, "obstacle_ratio": 0.20, "num_runs": 10},  # config_index 7
         ],
         "ostacoli": [
             # Gamma fitta di percentuali su griglia 15x15 per trovare la soglia critica
