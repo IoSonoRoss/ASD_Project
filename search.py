@@ -9,7 +9,6 @@ from data_structures import Grid, State, PriorityQueue
 D_globale = None
 memoization_cache = {}
 
-# --- A* REFACTORED PER USARE LE NUOVE CLASSI ---
 def cammino_min_reale_astar(grid: Grid, start_pos, end_pos):
     """
     Algoritmo A* che usa State e PriorityQueue.
@@ -17,7 +16,6 @@ def cammino_min_reale_astar(grid: Grid, start_pos, end_pos):
     start_state = State(start_pos, g_cost=0.0)
     
     open_list = PriorityQueue()
-    # La priorità è il f_score = g_score + h_score
     f_score_start = path_logic.calcola_distanza_libera(start_pos, end_pos)
     open_list.add(start_state, f_score_start)
     
@@ -56,7 +54,6 @@ def cammino_min_reale_astar(grid: Grid, start_pos, end_pos):
             
     return float('inf'), []
 
-# --- PROCEDURA CAMMINOMIN REFACTORED ---
 def procedura_cammino_min_ricorsiva(origin_pos, destination_pos, original_grid: Grid, label_manager, stats_tracker, ostacoli_proibiti=frozenset(), depth=0):
     """
     Procedura ricorsiva per trovare il cammino minimo tra due posizioni su una griglia,
