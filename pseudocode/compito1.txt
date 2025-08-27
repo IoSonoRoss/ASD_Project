@@ -1,0 +1,132 @@
+# Questo file contiene pseudocodice, non codice Python eseguibile
+
+generate_grid_map(rows, cols, obstacle_ratio){
+
+    grid <- matrice(rows × cols) 
+
+    total_cells <- rows * cols
+    num_obstacles_to_place <- floor(total_cells * obstacle_ratio)
+
+    if num_obstacles_to_place ≥ total_cells:
+        return matrice(rows × cols) 
+
+    placed_obstacles <- 0
+    max_attempts <- total_cells * 3
+    attempts <- 0
+
+    while placed_obstacles < num_obstacles_to_place AND attempts < max_attempts:
+        r <- numero casuale intero in [0, rows-1]
+        c <- numero casuale intero in [0, cols-1]
+
+        if grid[r][c] <- 0 then
+            grid[r][c] <- 1
+            placed_obstacles <- placed_obstacles + 1
+
+        attempts <- attempts + 1
+
+    if attempts ≥ max_attempts then
+        stampa "Attenzione: non è stato possibile piazzare tutti gli ostacoli"
+        stampa "Ostacoli piazzati:", placed_obstacles
+
+    return grid
+}
+
+is_within_bounds(gridMap, x, y){
+    """
+    Verifica se le coordinate sono all'interno della gridMap.
+
+    Args:
+        gridMap: La matrice della gridMap (rows x cols).
+        x, y: Coordinate da verificare.
+
+    Returns:
+        True se le coordinate sono valide, False altrimenti.
+    """
+    return 0 <= x < len(gridMap[0]) and 0 <= y < len(gridMap)
+}
+
+
+print_grid(griglia): 
+    """
+    Stampa le caratteristiche della mappa a griglia e il suo contenuto.
+
+    Args:
+        griglia: Matrice bidimensionale che rappresenta la mappa (0 = libero, 1 = ostacolo).
+    """
+
+    righe = numeroRighe(griglia)
+    colonne = numeroColonne(griglia) se righe > 0 altrimenti 0
+    celleTotali = righe * colonne
+    numeroOstacoli = somma(di ogni cella in ogni riga di griglia)
+
+    stampa "Righe:", righe
+    stampa "Colonne:", colonne
+    stampa "Celle totali:", celleTotali
+    stampa "Numero di ostacoli:", numeroOstacoli
+
+    stampa "Grid map:"
+    for each riga in griglia then
+        stampa(ogni cella convertita in stringa)
+
+from_matrix(grid_data):
+    
+    rows = numero di righe in grid_data
+    cols = numero di colonne in grid_data[0] se rows > 0 altrimenti 0
+
+    grid = nuova istanza di Grid(rows, cols)
+
+    obstacles = []
+
+    for r da 0 a rows-1:
+        for c da 0 a cols-1:
+            if grid_data[r][c] == 1:
+                aggiungi (r,c) a obstacles
+            else:
+                grid.adj[(r,c)] ={} 
+
+    moves["cardinal"] = [(-1,0), (1,0), (0,-1), (0,1)]
+    moves["diagonal"] = [(-1,-1), (-1,1), (1,-1), (1,1)]
+
+    for (r_curr, c_curr) in grid.adj.keys():
+        for (dr,dc) in moves["cardinal"]:
+            nr = r_curr + dr
+            nc = c_curr + dc
+            if (nr,nc) in grid.adj:
+                grid.adj[(r_curr,c_curr)][(nr,nc)] = 1.0
+
+        for (dr,dc) in moves["diagonal"]:
+            nr = r_curr + dr
+            nc = c_curr + dc
+            if (nr,nc) in grid.adj:
+                grid.adj[(r_curr,c_curr)][(nr,nc)] = sqrt(2)
+
+    return grid
+
+to_matrix(custom_values=None, default_obstacle_val=1, default_free_val=0):
+    matrix = matrice(self.rows × self.cols)
+
+    for (r, c) in self.adj.keys():
+        matrix[r][c] = default_free_val
+
+    if custom_values != None:
+        for ((r, c), value) in custom_values:
+            if 0 ≤ r < self.rows AND 0 ≤ c < self.cols:
+                matrix[r][c] = value
+
+    return matrix
+
+is_traversable(coords, obstacles){
+
+    condizione1 = (coords in adj)
+    condizione2 = (coords not in obstacles)
+
+    return (condizione1 AND condizione2)
+}
+
+get_neighbors(coords){
+
+    if coords in adj then
+        return adj[coords]
+    else
+        return 0
+}
