@@ -14,32 +14,28 @@ def get_user_configuration():
     con cicli di validazione per righe e colonne.
     """
     
-    # --- Input Robusto per le Righe ---
     while True:
         try:
             rows_input = input("Inserisci il numero di righe della griglia: ")
             rows = int(rows_input)
             if rows > 0:
-                break  # L'input e valido, esci dal ciclo
+                break  
             else:
                 print("ERRORE: Il numero di righe deve essere un intero positivo. Riprova.")
         except ValueError:
             print("ERRORE: Input non valido. Inserisci un numero intero. Riprova.")
 
-    # --- Input Robusto per le Colonne ---
     while True:
         try:
             cols_input = input("Inserisci il numero di colonne della griglia: ")
             cols = int(cols_input)
             if cols > 0:
-                break  # L'input e valido, esci dal ciclo
+                break  
             else:
                 print("ERRORE: Il numero di colonne deve essere un intero positivo. Riprova.")
         except ValueError:
             print("ERRORE: Input non valido. Inserisci un numero intero. Riprova.")
 
-    # --- Input per gli Ostacoli (con default) ---
-    # Questo mantiene il comportamento precedente, che va bene per un parametro non critico.
     try:
         obstacle_ratio_input = input("Inserisci la percentuale di ostacoli (da 0 a 100, default: 20): ") or "20"
         obstacle_ratio = int(obstacle_ratio_input) / 100.0
@@ -130,7 +126,6 @@ def main_compito2():
     
     vis_grid = grid.to_matrix(custom_values=valori_speciali)
 
-    # Preparazione legenda per il grafico
     color_map = {0:'white', 1:'#30307A', 2:'#90EE90', 3:'#FFD700', 4:'#FF0000', 5:'#006400', 6:'#800080'}
     label_map = {0:'Spazio Libero', 1:'Ostacolo', 2:'Contesto di O', 3:'Complemento di O', 4:'Origine O', 5:'Frontiera di O', 6:'Destinazione D'}
     cmap = ListedColormap([color_map.get(i) for i in sorted(color_map.keys())])

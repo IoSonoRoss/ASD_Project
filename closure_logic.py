@@ -16,7 +16,6 @@ def calcola_contesto_e_complemento(grid: Grid, origin, forbidden_obstacles=froze
             contesto.append(destination)
         else:
             path_t2 = path_logic.generate_path_coordinates(origin, destination, False)
-            # Aggiunto controllo per assicurarsi che il path_t2 sia valido
             if path_logic.is_path_free(grid, path_t2, forbidden_obstacles) and path_t1 != path_t2:
                 complemento.append(destination)
                 
