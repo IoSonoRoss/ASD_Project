@@ -1,0 +1,462 @@
+camminoMinimo(O, D, dim, osta){
+    """
+    Ritorna la lunghezza del cammino minimo (lunghezzaMin) da O a D (che è infinita 
+    se D non è raggiungibile da O) e la sequenza dei landmark (seqMin) lungo un cammino minimo (sequenza in base al
+    quale è possibile ricostruire l'intero percorso)
+    dim rappresenta le (due) dimensioni della griglia e osta l'insieme delle celle non attraversabili della stessa
+    """
+    
+    contesto <- CalcolaContesto(O, dim, osta)
+    if D in contesto then
+        return DLib(O, D), <<(O, 0),(D, 1)>>    #sequenza di due elementi
+    complemento <- CalcolaComplemento(O, dim, osta)
+    if D in complemento then
+        return DLib(O, D), <<(O, 0),(D, 2)>>
+    frontiera <- CalcolaFrontiera(contesto, complemento, dim, osta)
+    if frontiera.isEmpty() then     # vicolo cieco
+        return infinito, <>
+    lunghezzaMin <- infinito
+    seqMin = <>     # sequenza vuota
+    for each (F, t) in frontiera do
+        lF <- Dlib(O, F)
+        if lF < lunghezzaMin then  
+            lFD, seqFD <- camminoMinimo(F, D, dim, osta U contesto U complemento)
+            lTot <- lF + lFD 
+            if lTot < lunghezzaMin then
+                lunghezzaMin <- lTot
+                seqMin <- compatta(<(O, 0), (F, t)>, seqFD)
+    return lunghezzaMin, seqMin
+}
+
+calcolaFrontiera(grid, origine, contesto, complemento){
+    """
+    Calcola la frontiera di O e associa a ogni cella il suo tipo:
+        1 = cella del contesto
+        2 = cella del complemento
+
+    grid rappresenta la griglia (0 = libero, 1 = ostacolo).
+    origine rappresenta la cella iniziale (riga, colonna).
+    contesto rappresenta la lista di celle appartenenti al contesto.
+    complemento rappresenta la lista di celle appartenenti al complemento.
+
+    Ritorna la lista di tuple nel formato [ ((riga, colonna), tipo) ].
+    """
+
+    chiusura <- unione(insieme(contesto), insieme(complemento), {origine})
+    contesto_set <- insieme(contesto)
+    frontiera_con_tipo <- listaVuota()
+
+    direzioni <- [N, S, O, E, NO, NE, SO, SE]
+
+    for (r, c) in chiusura then
+        for (dr, dc) in direzioni then
+            nr <- r + dr
+            nc <- c + dc
+
+            if nr e nc sono dentro i limiti della griglia then
+                vicino <- (nr, nc)
+
+                if grid[nr][nc] == 0 e vicino non appartiene a chiusura then
+                    
+                    if (r, c) appartiene a contesto_set then
+                        tipo <- 1
+                    else
+                        tipo <- 2
+
+                    aggiungi ((r, c), tipo) a frontiera_con_tipo
+
+                    interrompi ciclo sulle direzioni
+
+    return frontiera_con_tipo
+}
+
+generate_path_coordinates(orig, dest, diagonal_first){
+    """
+    Genera la sequenza di coordinate che collega origine e destinazione
+    con mosse rettilinee e diagonali.
+    
+    orig rappresenta la cella di partenza (riga, colonna).
+    dest rappresenta la cella di arrivo (riga, colonna).
+    diagonal_first se True esegue prima tutte le mosse diagonali, altrimenti prima quelle rettilinee.
+
+    Ritorna la lista di celle che costituiscono il percorso.
+    """
+
+    path <- [orig]
+    r_curr, c_curr <- orig
+    r_dest, c_dest <- dest
+
+    delta_r <- r_dest - r_curr
+    delta_c <- c_dest - c_curr
+
+    num_diag <- min(valoreAssoluto(delta_r), valoreAssoluto(delta_c))
+    num_rect <- valoreAssoluto(valoreAssoluto(delta_r) - valoreAssoluto(delta_c))
+
+    step_r <- segno(delta_r)
+    step_c <- segno(delta_c)
+
+    if valoreAssoluto(delta_r) > valoreAssoluto(delta_c) then
+        rect_step_r <- step_r
+        rect_step_c <- 0
+    else
+        rect_step_r <- 0
+        rect_step_c <- step_c
+
+    if diagonal_first then
+        path <- faiMosseDiagonali(r_curr, step_r, c_curr, step_c, path, num_diag)
+        path <- faiMosseRettilinee(r_curr, rect_step_r, c_curr, rect_step_c, path, num_rect)
+    else
+        path <- faiMosseRettilinee(r_curr, rect_step_r, c_curr, rect_step_c, path, num_rect)
+        path <- faiMosseDiagonali(r_curr, step_r, c_curr, step_c, path, num_diag)
+
+    return path
+}
+
+funzione faiMosseDiagonali(r_curr, step_r, c_curr, step_c, path, num_diag){
+    for i da 1 a num_diag then
+        r_curr <- r_curr + step_r
+        c_curr <- c_curr + step_c
+        aggiungi (r_curr, c_curr) a path
+
+    return path
+}
+
+funzione faiMosseRettilinee(r_curr, rect_step_r, c_curr, rect_step_c, path, num_rect){
+    for i da 1 a num_rect then
+        r_curr <- r_curr + rect_step_r
+        c_curr <- c_curr + rect_step_c
+        aggiungi (r_curr, c_curr) a path
+
+    return path
+}
+
+compatta_sequenza(seq1, seq2_landmark){
+    """
+    Accoda il landmark di destinazione del secondo percorso.
+    """
+    return seq1 + [seq2_landmark]
+}
+
+procedura_cammino_min(origin, destination, grid, label_manager, ostacoli_proibiti = {}, depth = 0){
+    """
+    Algoritmo ricorsivo per trovare il cammino minimo tra origin e destination
+    su una griglia con ostacoli
+    """
+
+    cache_key <- (origin, destination, ostacoli_proibiti)
+    if cache_key in memorization_cache then
+        return memorization_cache[cache_key]
+
+    if origin == destination then
+        return (0, [(origin, 1)])
+
+    grid_temp <- copia_di(grid)
+    for (r, c) in ostacoli_proibiti then
+        if r e c sono indici validi then
+            grid_temp[r][c] <- 1
+
+    (contesto, complemento) <- calcola_contesto_e_complemento(grid_temp, origin)
+
+    if destination in contesto then
+        lunghezza <- calcola_distanza_libera(origin, destination)
+        result <- (lunghezza, [(origin, 0), (destination, 1)])
+        memorization_cache[cache_key] <- result
+        return result
+
+    if destination in complemento then
+        lunghezza <- calcola_distanza_libera(origin, destination)
+        result <- (lunghezza, [(origin, 0), (destination, 2)])
+        memorization_cache[cache_key] <- result
+        return result
+
+    frontiera_con_tipo <- calcola_frontiera(grid_temp, origin, contesto, complemento)
+
+    if frontiera_con_tipo è vuota then
+        memorization_cache[cache_key] <- (infinito, [])
+        return (infinito, [])
+
+    lunghezza_min <- infinito
+    seq_min <- []
+
+    ordina(frontiera_con_tipo, chiave <- distanzaLibera(cella, destination))
+
+    for (F, tipo_F) in frontiera_con_tipo then
+        lOF <- calcola_distanza_libera(origin, F)
+        euristica_FD <- calcola_distanza_libera(F, destination)
+        costo_stimato <- lOF + euristica_FD
+
+        if costo_stimato ≥ lunghezza_min then
+            continue
+
+        chiusura <- contesto unito complemento unito {origin}
+        nuovi_ostacoli <- ostacoli_proibiti unito chiusura
+
+        (lFD, seqFD) <- procedura_cammino_min(F, destination, grid, label_manager, nuovi_ostacoli, depth+1)
+
+        if lFD == infinito then
+            continue
+
+        lTot <- lOF + lFD
+        if lTot < lunghezza_min then
+            lunghezza_min <- lTot
+            seq_min <- compatta_sequenza([(origin, 0), (F, tipo_F)], seqFD)
+
+    memorization_cache[cache_key] <- (lunghezza_min, seq_min)
+    return (lunghezza_min, seq_min)
+}
+
+cammino_min_reale_astar(grid, start_pos, end_pos):
+
+    start_state =  State(start_pos, g_cost = 0.0)
+
+    open_list = PriorityQueue
+    f_score_start = calcola_distanza_libera(start_pos, end_pos)
+    open_list.add(start_state, f_score_start)
+
+    closed_set = insieme vuoto
+
+    neighbors_moves = [
+        ((0, 1), 1),  ((0, -1), 1), 
+        ((1, 0), 1),  ((-1, 0), 1),
+        ((1, 1), √2), ((1, -1), √2),
+        ((-1, 1), √2),((-1, -1), √2)
+    ]
+
+    while open_list non è vuota:
+        current_state = open_list.pop()
+
+        if current_state.position == end_pos then:
+            path = lista vuota
+            curr = current_state
+            while curr esiste:
+                aggiungi curr.position a path
+                curr = curr.parent
+            return (current_state.g_cost, path invertito)
+
+        aggiungi current_state a closed_set
+
+        for each (dr, dc), cost in neighbors_moves:
+            neighbor_pos = current_state.position + (dr, dc)
+
+            if neighbor_pos non è dentro i limiti della griglia OR è un ostacolo:
+                continua
+
+            neighbor_state = nuovo State(
+                position = neighbor_pos,
+                parent = current_state,
+                g_cost = current_state.g_cost + cost
+            )
+
+            if neighbor_state in closed_set:
+                continua
+
+            f_score = neighbor_state.g_cost + calcola_distanza_libera(neighbor_pos, end_pos)
+            open_list.add(neighbor_state, f_score)
+
+    return (infinito, lista vuota)
+
+procedura_cammino_min_ricorsiva(origin_pos, destination_pos, original_grid, label_manager, stats_tracker, ostacoli_proibiti = ∅, depth = 0):
+
+    cache_key = (origin_pos, destination_pos, ostacoli_proibiti ordinati)
+    if cache_key in memoization_cache then:
+        return memoization_cache[cache_key]
+
+    if origin_pos == destination_pos then:
+        return (0, [(origin_pos, 1)])
+
+    grid_data_temp = copia della matrice original_grid.data
+    for each cella (r, c) in ostacoli_proibiti:
+        grid_data_temp[r][c] = 1
+    grid_temp = nuova Grid(grid_data_temp)
+
+    (contesto, complemento) = calcola_contesto_e_complemento(grid_temp, origin_pos)
+
+    if destination_pos in contesto:
+        result = (distanza_libera(origin_pos, destination_pos), [(origin_pos, 0), (destination_pos, 1)])
+        memoization_cache[cache_key] = result
+        return result
+
+    if destination_pos in complemento:
+        result = (distanza_libera(origin_pos, destination_pos), [(origin_pos, 0), (destination_pos, 2)])
+        memoization_cache[cache_key] = result
+        return result
+
+    frontiera_con_tipo = calcola_frontiera(grid_temp, origin_pos, contesto, complemento)
+
+    stats_tracker.add_frontier_cells(frontiera_con_tipo)
+    for each (coords, _) in frontiera_con_tipo:
+        label_manager.get_label(coords)
+
+    if frontiera_con_tipo è vuota then:
+        return (infinito, lista vuota)
+
+    lunghezza_min = infinito
+    seq_min = []
+
+    ordina frontiera_con_tipo per distanza_libera(F, destination_pos)
+
+    for each (F_pos, tipo_F) in frontiera_con_tipo:
+        lOF = distanza_libera(origin_pos, F_pos)
+
+        if lOF + distanza_libera(F_pos, destination_pos) ≥ lunghezza_min:
+            stats_tracker.increment_pruning_count()
+            continua
+
+        chiusura_attuale = contesto ∪ complemento ∪ {origin_pos}
+        nuovi_ostacoli = ostacoli_proibiti ∪ chiusura_attuale
+
+        (lFD, seqFD) = procedura_cammino_min_ricorsiva(
+            F_pos, destination_pos, original_grid, 
+            label_manager, stats_tracker, 
+            nuovi_ostacoli, depth + 1
+        )
+
+        if lFD = infintio:
+            continua
+
+        lTot = lOF + lFD
+        if lTot < lunghezza_min:
+            lunghezza_min = lTot
+            seq_min = compatta_sequenza([(origin_pos, 0), (F_pos, tipo_F)], seqFD)
+
+    memoization_cache[cache_key] = (lunghezza_min, seq_min)
+    return (lunghezza_min, seq_min)
+
+is_path_free(grid, path, forbidden_obstacles){
+
+    if path <- vuoto then
+        return False
+
+    for each coords in path do
+        if grid.is_traversable(coords, forbidden_obstacles) <- False then
+            return False
+
+    return True
+}
+
+calcola_distanza_libera(origin, destination){
+
+    if origin = NULL OR destination = NULL then
+        return infinito
+
+    delta_x = abs(origin.col - destination.col)
+    delta_y = abs(origin.row - destination.row)
+
+    delta_min = min(delta_x, delta_y)
+    delta_max = max(delta_x, delta_y)
+
+    return (sqrt(2) * delta_min) + (delta_max - delta_min)
+}
+
+solve():
+    stats.execution_time = 0.0
+    stats.recursive_calls = 0
+    stats.cache_hits = 0
+    stats.total_unique_frontiers = NULL
+    stats.pruning_successes = 0
+    stats.max_recursion_depth = 0
+
+    start_time = timer()
+
+    Avvia la procedura ricorsiva CAMMINOMIN con ostacoli proibiti = NULL
+
+    end_time = timer()
+
+    stats.execution_time = end_time - start_time
+
+cammino_min_ricorsiva(current_origin, current_dest, forbidden_obstacles, depth){
+
+    recursive_calls <- recursive_calls + 1
+    max_recursion_depth <- max(max_recursion_depth, depth)
+
+    cache_key <- (current_origin, current_dest, forbidden_obstacles)
+    if cache_key in memoization_cache then
+        cache_hits = cache_hits + 1
+        return memoization_cache[cache_key]
+
+    if current_origin <- current_dest then
+        return (0, [(current_origin, 1)])
+
+    (contesto, complemento) <- calcola_contesto_e_complemento(grid, current_origin, forbidden_obstacles)
+
+    if current_dest in contesto then
+        dist <- calcola_distanza_libera(current_origin, current_dest)
+        seq <- [(current_origin, 0), (current_dest, 1)]
+        memoization_cache[cache_key] <- (dist, seq)
+        return (dist, seq)
+
+    if current_dest in complemento then
+        dist <- calcola_distanza_libera(current_origin, current_dest)
+        seq <- [(current_origin, 0), (current_dest, 2)]
+        memoization_cache[cache_key] <- (dist, seq)
+        return (dist, seq)
+
+    frontiera <- calcola_frontiera(grid, current_origin, contesto, complemento, forbidden_obstacles)
+    AGGIORNA stats.total_unique_frontiers CON frontiera
+
+    if frontiera è vuota then
+        return (infinito, [])
+
+    best_len_locale <- infinito
+    best_seq_locale <- []
+
+    ORDINA frontiera PER distanza_libera(F, current_dest)
+
+    for each (f_pos, f_type) in frontiera do
+        len_of = calcola_distanza_libera(current_origin, f_pos)
+
+        if len_of + calcola_distanza_libera(f_pos, current_dest) ≥ best_len_locale then
+            pruning_successes = pruning_successes + 1
+            continua
+
+        current_closure <- contesto ∪ complemento ∪ {current_origin}
+        new_forbidden_obstacles <- forbidden_obstacles ∪ current_closure
+
+        (len_fd, seq_fd) <- procedura_cammino_min_ricorsiva(f_pos, current_dest, new_forbidden_obstacles, depth+1)
+
+        if len_fd != infinito then
+            total_len <- len_of + len_fd
+            if total_len < best_len_locale then
+                best_len_locale <- total_len
+                best_seq_locale <- compatta_sequenza([(current_origin, 0), (f_pos, f_type)], seq_fd)
+
+    memoization_cache[cache_key] <- (best_len_locale, best_seq_locale)
+    return (best_len_locale, best_seq_locale)
+}
+
+COSTANTI:
+    CELL_CONTESTO      = 2
+    CELL_COMPLEMENTO   = 3
+    CELL_ORIGINE       = 4
+    CELL_FRONTIERA     = 5
+    CELL_DESTINAZIONE  = 6
+
+visualize_initial_colsure_and_frontier(){
+
+    (contesto_O, complemento_O) <- (grid, origin)
+
+    frontiera_O_con_tipo <- calcola_frontiera(grid, origin, contesto_O, complemento_O)
+
+    valori_speciali <- dizionario vuoto
+    for each (r, c) in contesto_O:
+        valori_speciali[(r, c)] <- CELL_CONTESTO
+    for each (r, c) in complemento_O:
+        valori_speciali[(r, c)] <- CELL_COMPLEMENTO
+    for each (r, c), _ in frontiera_O_con_tipo:
+        valori_speciali[(r, c)] <- CELL_FRONTIERA
+    valori_speciali[origin] <- CELL_ORIGINE
+    valori_speciali[destination] <- CELL_DESTINAZIONE
+
+    vis_grid <- grid_to_matrix(grid, custom_values = valori_speciali)
+
+    color_map <- {0: bianco, 1: blu_scuro, 2: verde_chiaro, 3: oro, 
+                 4: rosso, 5: verde_scuro, 6: viola}
+    label_map <- {0: Spazio Libero, 1: Ostacolo, 2: Contesto, 3: Complemento, 
+                 4: Origine O, 5: Frontiera, 6: Destinazione D}
+
+    cmap <- creazione_colormap(color_map)
+    legend_patches <- crea_patches(color_map, label_map)
+
+    titolo <- "Chiusura e Frontiera di O=" + origin
+    visualizza_risultato(vis_grid, cmap, legend_patches, titolo)
+}
