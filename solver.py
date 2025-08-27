@@ -13,8 +13,6 @@ class PathfindingSolver:
         """
         Il costruttore inizializza il problema.
         """
-        # Non stampiamo piu' all'init perche' puo' essere chiamato in un ciclo
-        # print("Inizializzazione del solver...")
         self.grid = Grid.from_matrix(grid_data)
         self.origin = origin
         self.destination = destination
@@ -34,10 +32,10 @@ class PathfindingSolver:
         self.lunghezza_minima = float('inf')
         self.sequenza_landmark = []
 
-    def solve(self, debug=True):
+    def solve(self, debug=True, use_cache=True, use_pruning=True):
         """
         Avvia l'algoritmo ricorsivo e ne misura le performance.
-        Il flag 'debug' controlla la verbosita' dell'output.
+        I flag 'use_cache' e 'use_pruning' controllano le ottimizzazioni.
         """
         self.stats = {
             "execution_time": 0.0,
@@ -48,9 +46,14 @@ class PathfindingSolver:
             "max_recursion_depth": 0
         }
 
+        # Resetta la cache solo se stiamo per usarla
+        if use_cache:
+            self.memoization_cache = {}
+
         if debug:
             print(f"\n--- Esecuzione Procedura CAMMINOMIN da O={self.origin} a D={self.destination} ---")
-        
+            print(f"    (Cache: {'Attiva' if use_cache else 'Disattiva'}, Pruning: {'Attivo' if use_pruning else 'Disattivo'})")
+
         start_time = time.perf_counter()
         
         self.lunghezza_minima, self.sequenza_landmark = self._cammino_min_ricorsivo(
@@ -58,7 +61,9 @@ class PathfindingSolver:
             self.destination, 
             frozenset(),
             depth=0,
-            debug=debug  # Passa il flag alla funzione ricorsiva
+            debug=debug,
+            use_cache=use_cache,
+            use_pruning=use_pruning
         )
 
         end_time = time.perf_counter()
@@ -67,9 +72,10 @@ class PathfindingSolver:
         if debug:
             print(f"--- Esecuzione completata in {self.stats['execution_time']:.4f} secondi ---")
 
-    def _cammino_min_ricorsivo(self, current_origin, current_dest, forbidden_obstacles, depth=0, debug=True):
+    def _cammino_min_ricorsivo(self, current_origin, current_dest, forbidden_obstacles, 
+                               depth=0, debug=True, use_cache=True, use_pruning=True):
         """
-        Implementazione ricorsiva di CAMMINOMIN con stampe di debug e statistiche.
+        Implementazione ricorsiva di CAMMINOMIN con ottimizzazioni configurabili.
         """
         self.stats["recursive_calls"] += 1
         if depth > self.stats["max_recursion_depth"]:
@@ -82,7 +88,8 @@ class PathfindingSolver:
             print(f"{indent}║ Ostacoli Proibiti: {len(forbidden_obstacles)} elementi")
         
         cache_key = (current_origin, current_dest, forbidden_obstacles)
-        if cache_key in self.memoization_cache:
+        # Controlla la cache solo se l'opzione e' attiva
+        if use_cache and cache_key in self.memoization_cache:
             self.stats["cache_hits"] += 1
             if debug:
                 print(f"{indent}║ -> Trovato in CACHE. Ritorno il risultato salvato.")
@@ -107,7 +114,7 @@ class PathfindingSolver:
                 print(f"{indent}║ -> CASO BASE: Destinazione nel CONTESTO. Ritorno ({dist:.2f}, [...]).")
                 print(f"{indent}╚══════════════════════════════════════════════════════")
             seq = [(current_origin, 0), (current_dest, 1)]
-            self.memoization_cache[cache_key] = (dist, seq)
+            if use_cache: self.memoization_cache[cache_key] = (dist, seq)
             return dist, seq
         
         if current_dest in set(complemento):
@@ -116,7 +123,7 @@ class PathfindingSolver:
                 print(f"{indent}║ -> CASO BASE: Destinazione nel COMPLEMENTO. Ritorno ({dist:.2f}, [...]).")
                 print(f"{indent}╚══════════════════════════════════════════════════════")
             seq = [(current_origin, 0), (current_dest, 2)]
-            self.memoization_cache[cache_key] = (dist, seq)
+            if use_cache: self.memoization_cache[cache_key] = (dist, seq)
             return dist, seq
 
         frontiera = closure_logic.calcola_frontiera(
@@ -144,7 +151,8 @@ class PathfindingSolver:
             if debug:
                 print(f"{indent}║ ({i+1}/{len(frontiera)}) Esamino F={f_pos} (tipo {f_type}). Costo O->F: {len_of:.2f}")
 
-            if len_of + path_logic.calcola_distanza_libera(f_pos, current_dest) >= best_len_locale:
+            # Esegui il pruning solo se l'opzione e' attiva
+            if use_pruning and (len_of + path_logic.calcola_distanza_libera(f_pos, current_dest) >= best_len_locale):
                 self.stats["pruning_successes"] += 1
                 if debug:
                     print(f"{indent}║   -> PRUNING: costo potenziale ({len_of + path_logic.calcola_distanza_libera(f_pos, current_dest):.2f}) >= miglior costo attuale ({best_len_locale:.2f})")
@@ -154,7 +162,8 @@ class PathfindingSolver:
             new_forbidden_obstacles = forbidden_obstacles.union(current_closure)
             
             len_fd, seq_fd = self._cammino_min_ricorsivo(
-                f_pos, current_dest, new_forbidden_obstacles, depth + 1, debug=debug
+                f_pos, current_dest, new_forbidden_obstacles, depth + 1,
+                debug=debug, use_cache=use_cache, use_pruning=use_pruning
             )
             
             if len_fd != float('inf'):
@@ -174,21 +183,18 @@ class PathfindingSolver:
             print(f"{indent}║ Salvo in CACHE e ritorno.")
             print(f"{indent}╚══════════════════════════════════════════════════════")
         
-        self.memoization_cache[cache_key] = (best_len_locale, best_seq_locale)
+        # Salva in cache solo se l'opzione e' attiva
+        if use_cache:
+            self.memoization_cache[cache_key] = (best_len_locale, best_seq_locale)
         return best_len_locale, best_seq_locale
     
     def get_stats_summary(self):
-        """
-        Restituisce un dizionario pulito con le statistiche finali,
-        pronto per essere scritto su CSV.
-        """
         summary = self.stats.copy()
         summary["total_unique_frontiers"] = len(self.stats["total_unique_frontiers"])
         summary["max_recursion_depth"] = self.stats["max_recursion_depth"] + 1
         return summary
 
     def display_results(self):
-        # ... questo metodo non cambia ...
         if self.lunghezza_minima == float('inf'):
             print("\nRISULTATO: La destinazione D non è raggiungibile da O.")
             return
@@ -203,7 +209,6 @@ class PathfindingSolver:
         print(f"  Sequenza di landmark: {output_str.strip()}>")
 
     def visualize_initial_closure_and_frontier(self):
-        # ... questo metodo non cambia ...
         contesto_O, complemento_O = closure_logic.calcola_contesto_e_complemento(self.grid, self.origin)
         frontiera_O_con_tipo = closure_logic.calcola_frontiera(self.grid, self.origin, contesto_O, complemento_O)
         CELL_CONTESTO, CELL_COMPLEMENTO, CELL_ORIGINE, CELL_FRONTIERA, CELL_DESTINAZIONE = 2, 3, 4, 5, 6

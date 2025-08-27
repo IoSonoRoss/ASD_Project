@@ -21,7 +21,6 @@ def select_od_pair(grid_obj: Grid):
     if len(free_cells) < 2:
         return None, None
 
-    # Tenta di scegliere O e D in quadranti opposti per massimizzare la distanza
     quadrant1 = [cell for cell in free_cells if cell[0] < rows / 2 and cell[1] < cols / 2]
     quadrant4 = [cell for cell in free_cells if cell[0] > rows / 2 and cell[1] > cols / 2]
     
@@ -30,37 +29,15 @@ def select_od_pair(grid_obj: Grid):
         destination = random.choice(quadrant4)
         return origin, destination
     else:
-        # Fallback se i quadranti sono vuoti o per griglie piccole
         return random.sample(free_cells, 2)
 
-def run_single_run(grid_data, origin, destination):
-    """
-    Esegue un test usando PathfindingSolver e recupera le statistiche.
-    Include la verifica di correttezza D->O.
-    """
-    results = {}
-
-    # --- Test O -> D ---
-    # Non stampiamo piu' il log dettagliato per velocizzare gli esperimenti
-    # print(f"    Esecuzione CAMMINOMIN({origin}, {destination})...")
-    solver_od = PathfindingSolver(grid_data, origin, destination)
-    solver_od.solve(debug=False) # Aggiungiamo un flag per disabilitare le stampe
-    stats_od = solver_od.get_stats_summary()
-    results['lunghezza_OD'] = solver_od.lunghezza_minima
-    results.update({f"{key}_OD": val for key, val in stats_od.items()})
-
-    # --- Test D -> O (Correttezza) ---
-    # print(f"    Esecuzione CAMMINOMIN({destination}, {origin})...")
-    solver_do = PathfindingSolver(grid_data, destination, origin)
-    solver_do.solve(debug=False)
-    stats_do = solver_do.get_stats_summary()
-    results['lunghezza_DO'] = solver_do.lunghezza_minima
-    results.update({f"{key}_DO": val for key, val in stats_do.items()})
-    
-    # Verifica coerenza
-    lung_od, lung_do = results['lunghezza_OD'], results['lunghezza_DO']
-    results['correttezza_superata'] = math.isclose(lung_od, lung_do) if lung_od != float('inf') else lung_do == float('inf')
-
+def run_single_run(grid_data, origin, destination, use_cache=True, use_pruning=True):
+    solver = PathfindingSolver(grid_data, origin, destination)
+    # Passiamo i flag per le ottimizzazioni
+    solver.solve(debug=False, use_cache=use_cache, use_pruning=use_pruning)
+    stats = solver.get_stats_summary()
+    results = {'lunghezza': solver.lunghezza_minima}
+    results.update(stats)
     return results
 
 def main(args):
@@ -89,6 +66,12 @@ def main(args):
             {"rows": 15, "cols": 15, "obstacle_ratio": 0.40, "num_runs": 10}, # config_index 6
             {"rows": 15, "cols": 15, "obstacle_ratio": 0.45, "num_runs": 10}, # config_index 7
             {"rows": 15, "cols": 15, "obstacle_ratio": 0.50, "num_runs": 10}, # config_index 8
+        ],
+        # --- NUOVA SUITE PER IL CONFRONTO ---
+        "confronto": [
+            {"rows": 10, "cols": 10, "obstacle_ratio": 0.20, "num_runs": 10}, # config_index 0
+            {"rows": 15, "cols": 15, "obstacle_ratio": 0.20, "num_runs": 5},  # config_index 1
+            {"rows": 18, "cols": 18, "obstacle_ratio": 0.20, "num_runs": 3},  # config_index 2
         ]
     }
     
@@ -119,11 +102,44 @@ def main(args):
         if not origin:
             print("    ERRORE: Griglia troppo piena per trovare una coppia O, D. Run saltato.")
             continue
+
+        # --- LOGICA DI ESECUZIONE SPECIFICA PER TIPO DI TEST ---
+        if test_type == 'confronto':
+            # Esegui versione OTTIMIZZATA
+            risultati_opt = run_single_run(grid_data, origin, destination, use_cache=True, use_pruning=True)
+            # --- MODIFICA CHIAVE QUI ---
+            # Aggiungiamo il suffisso _OD per coerenza
+            record_opt = {**config, "run_num": i+1, "origin": origin, "destination": destination, "type": "ottimizzato"}
+            record_opt.update({f"{k}_OD": v for k, v in risultati_opt.items()}) # Aggiunge suffisso _OD
+            lista_risultati_run.append(record_opt)
             
-        risultati_run = run_single_run(grid_data, origin, destination)
-        
-        record_completo = {**config, "run_num": i + 1, "origin": origin, "destination": destination, **risultati_run}
-        lista_risultati_run.append(record_completo)
+            # Esegui versione NAIVE
+            risultati_naive = run_single_run(grid_data, origin, destination, use_cache=False, use_pruning=False)
+            # --- MODIFICA CHIAVE QUI ---
+            record_naive = {**config, "run_num": i+1, "origin": origin, "destination": destination, "type": "naive"}
+            record_naive.update({f"{k}_OD": v for k, v in risultati_naive.items()}) # Aggiunge suffisso _OD
+            lista_risultati_run.append(record_naive)
+        else:
+            # Esecuzione standard con test di correttezza O->D e D->O
+            solver_od = PathfindingSolver(grid_data, origin, destination)
+            solver_od.solve(debug=False)
+            stats_od = solver_od.get_stats_summary()
+            
+            solver_do = PathfindingSolver(grid_data, destination, origin)
+            solver_do.solve(debug=False)
+            stats_do = solver_do.get_stats_summary()
+
+            risultati_run = {}
+            risultati_run['lunghezza_OD'] = solver_od.lunghezza_minima
+            risultati_run.update({f"{key}_OD": val for key, val in stats_od.items()})
+            risultati_run['lunghezza_DO'] = solver_do.lunghezza_minima
+            risultati_run.update({f"{key}_DO": val for key, val in stats_do.items()})
+            
+            lung_od, lung_do = risultati_run['lunghezza_OD'], risultati_run['lunghezza_DO']
+            risultati_run['correttezza_superata'] = math.isclose(lung_od, lung_do) if lung_od != float('inf') else lung_do == float('inf')
+            
+            record_completo = {**config, "run_num": i + 1, "origin": origin, "destination": destination, **risultati_run}
+            lista_risultati_run.append(record_completo)
 
     if lista_risultati_run:
         output_dir = "experiment_data"
@@ -146,7 +162,7 @@ def main(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Script per la sperimentazione dell'algoritmo CAMMINOMIN.")
-    parser.add_argument("--test_type", required=True, choices=["dimensione", "ostacoli"], help="Il tipo di esperimento da eseguire.")
+    parser.add_argument("--test_type", required=True, choices=["dimensione", "ostacoli", "confronto"], help="Il tipo di esperimento da eseguire.")
     parser.add_argument("--config_index", required=True, type=int, help="L'indice della configurazione da testare all'interno del tipo di test.")
     
     args = parser.parse_args()
