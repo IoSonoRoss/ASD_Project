@@ -21,7 +21,7 @@ class Grid:
         
         grid = cls(rows, cols)
 
-        # 1. Aggiungi tutti i nodi attraversabili alla lista di adiacenze
+        # Aggiungi tutti i nodi attraversabili alla lista di adiacenze
         obstacles = set()
         for r in range(rows):
             for c in range(cols):
@@ -30,7 +30,7 @@ class Grid:
                 else:
                     grid.adj[(r, c)] = {} # Inizializza un dizionario vuoto per i vicini
 
-        # 2. Popola i vicini per ogni nodo attraversabile
+        # Popola i vicini per ogni nodo attraversabile
         moves = {
             "cardinal": [(-1, 0), (1, 0), (0, -1), (0, 1)],
             "diagonal": [(-1, -1), (-1, 1), (1, -1), (1, 1)]
