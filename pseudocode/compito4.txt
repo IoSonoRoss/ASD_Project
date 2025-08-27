@@ -1,0 +1,132 @@
+load_and_combine_data(data_directory="dir_file"){
+
+    csv_files <- lista di tutti i file CSV in data_directory
+
+    if csv_files == [] then
+        stampa "Nessun file CSV trovato"
+        return None
+
+    df_list <- lista vuota
+    for each file in csv_files then
+        df <- leggi CSV in file
+        aggiungi df a df_list
+
+    full_df <- concatena tutti i DataFrame in df_list con indice ignorato
+
+    stampa "Unificazione completata."
+
+    return full_df
+}
+
+analyze_and_plot(df){
+
+    if df == None then
+        return 
+
+    num_inconsistent <- numero di righe in df dove 'correttezza_superata' == False
+    if num_inconsistent > 0 then
+        stampa "ATTENZIONE: Trovati num_inconsistent run non consistenti!"
+        stampa righe di df non consistenti
+    else
+        stampa "Verifica di coerenza superata"
+
+    df_dimensione <- righe di df dove 'id_scenario' inizia con 'dimensione'
+    if df_dimensione not NIL then
+        colonne_da_mediare <- ['execution_time_OD', 'recursive_calls_OD', 'cache_hits_OD', 'total_unique_frontiers_OD', 'pruning_successes_OD']
+        avg_dimensione <- df_dimensione raggruppato per 'rows' calcolando la media delle colonne_da_mediare
+
+        stampa "Dati Medi per Test di Dimensione"
+        stampa avg_dimensione
+
+        # Grafico 1: Tempo di Esecuzione
+        crea figura 12x8
+        disegna avg_dimensione['rows'] vs avg_dimensione['execution_time_OD']
+        imposta titolo, label assi, griglia, ticks, legenda
+        salva figura "grafico_1_tempo_vs_dimensione.png"
+        mostra figura
+
+        # Grafico 2: Chiamate Ricorsive e Cache Hits
+        crea figura 12x8 con assi ax1
+        disegna ax1: avg_dimensione['rows'] vs recursive_calls_OD (asse Y1)
+        crea assi secondario ax2 condividendo X
+        disegna ax2: avg_dimensione['rows'] vs cache_hits_OD (asse Y2)
+        imposta titoli, etichette, colori, griglia
+        combina legende assi
+        salva figura "grafico_2_lavoro_vs_dimensione.png"
+        mostra figura
+
+    df_ostacoli <- righe di df dove 'id_scenario' inizia con 'ostacoli'
+    if df_ostacoli not NIL then
+        colonne_da_mediare_ostacoli <- ['execution_time_OD', 'total_unique_frontiers_OD']
+        avg_ostacoli <- df_ostacoli raggruppato per 'obstacle_ratio', calcola media colonne_da_mediare_ostacoli
+
+        stampa "Dati Medi per Test su Densità Ostacoli"
+        stampa avg_ostacoli
+
+        # Grafico 3: Complessità del Labirinto
+        crea figura 12x8
+        disegna avg_ostacoli['obstacle_ratio']*100 vs total_unique_frontiers_OD
+        imposta titolo, etichette assi, griglia
+        salva figura "grafico_3_frontiere_vs_ostacoli.png"
+        mostra figura
+}
+
+select_od_pair(grid_obj){
+
+    rows <- numero di righe di grid_obj
+    cols <- numero di colonne di grid_obj
+    free_cells <- lista di tutte le celle libere in grid_obj (chiavi di adj)
+
+    if numero di free_cells < 2 then
+        return (None, None)
+
+    quadrant1 <- celle in free_cells con riga < rows/2 e colonna < cols/2
+    quadrant4 <- celle in free_cells con riga > rows/2 e colonna > cols/2
+
+    if quadrant1 AND quadrant4 not NIL then
+        origin <- scegli casualmente una cella da quadrant1
+        destination <- scegli casualmente una cella da quadrant4
+        return (origin, destination)
+    else
+        return due celle scelte casualmente da free_cells
+}
+
+run_single_run(grid_data, origin, destination){
+
+    crea dizionario results vuoto
+
+    stampa "Esecuzione CAMMINOMIN(origin, destination)..."
+    solver_od <- crea PathfindingSolver con grid_data, origin, destination
+    solver_od.solve()
+    stats_od <- solver_od.get_stats_summary()
+    results['lunghezza_OD'] <- solver_od.lunghezza_minima
+    aggiungi a results tutti i valori di stats_od con suffisso '_OD'
+
+    stampa "Esecuzione CAMMINOMIN(destination, origin)..."
+    solver_do <- crea PathfindingSolver con grid_data, destination, origin
+    solver_do.solve()
+    stats_do <- solver_do.get_stats_summary()
+    results['lunghezza_DO'] <- solver_do.lunghezza_minima
+    aggiungi a results tutti i valori di stats_do con suffisso '_DO'
+
+    lung_od <- results['lunghezza_OD']
+    lung_do <- results['lunghezza_DO']
+    if lung_od != infinito then
+        results['correttezza_superata'] <- math.isclose(lung_od, lung_do)
+    else
+        results['correttezza_superata'] <- (lung_do == infinito)
+
+    return results
+}
+
+get_stats_summary(){
+
+    summary <- copia(stats)
+
+    summary["totaleFrontiereUniche"] <- length(stats["totaleFrontiereUniche"])
+
+    summary["ProfonditàMassima"] = stats["ProfonditàMassima"] + 1
+
+    return summary
+
+}

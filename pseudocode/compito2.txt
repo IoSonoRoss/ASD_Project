@@ -1,0 +1,366 @@
+#Nel compito 2 vengono sfruttate parti dello pseudocodice del compito 1
+
+calcola_contesto_complemento(gridMap, x, y){
+    """
+    Calcola il contesto e il complemento di una cella O nella griglia.
+    gridMap rappresenta la griglia
+    x, y rappresentan le coordinate della cella O
+
+    Ritorna la coppia (contesto, complemento)
+    """
+    contesto <- []
+    complemento <- []
+
+    for j in range(len(gridMap)) then          
+        for i in range(len(gridMap[0])) then    
+
+            if i == x and j == y:
+                continue
+
+            complemento.append((i, j))
+
+            if abs(i - x) <= 1 and abs(j - y) <= 1:
+                contesto.append((i, j))
+
+    return (contesto, complemento)
+}
+
+calcola_distanza_libera(gridMap, xO, yO, xD, yD){
+    """
+    Calcola la distanza libera più breve tra le celle (xO, yO) e (xD, yD),
+    evitando muri e usando le mosse valide.
+    gridMap rappresenta la griglia
+    xO, yO rappresentano le coordinate della cella di origine.
+    xD, yD rappresentan le coordinate della cella di destinazione.
+
+    Ritorna la distanza libera oppure -1 se D non è raggiungibile.
+    """
+
+    if isMuro(gridMap, xO, yO) or isMuro(gridMap, xD, yD) then
+        return -1
+
+    coda <- Queue()
+    visitati <- set()
+
+    coda.enqueue((xO, yO, 0))         
+    visitati.add((xO, yO))
+
+    direzioni = ['N', 'S', 'E', 'O', 'NE', 'NO', 'SE', 'SO']
+
+    while not coda.isEmpty() then
+        x, y, distanza <- coda.dequeue()
+
+        if x == xD and y == yD then
+            return distanza
+
+        for direzione in direzioni then
+            risultato <- mossa(gridMap, x, y, direzione)
+
+            if tipo(risultato) == tuple then
+                nx, ny <- risultato
+
+                if (nx, ny) not in visitati then
+                    nuovaDistanza <- distanza + calcolaDistanzaMossa(direzione)
+                    coda.enqueue((nx, ny, nuovaDistanza))
+                    visitati.add((nx, ny))
+
+    return -1 
+}
+
+camminoLibero(gridMap, xO, yO, xD, yD){
+    """
+    Calcola il cammino libero più breve tra (xO, yO) e (xD, yD), evitando ostacoli.
+    gridMap rappresenta la matrice della griglia.
+    xO, yO rappresentano le coordinate della cella di origine.
+    xD, yD rappresentano le coordinate della cella di destinazione.
+
+    Ritorna la lista ordinata di celle che costituisce il cammino, oppure [] se la destinazione non è raggiungibile.
+    """
+
+    if isMuro(gridMap, xO, yO) or isMuro(gridMap, xD, yD) then
+        return []
+
+    coda <- Queue()
+    visitati <- set()
+    predecessori <- dict()    
+
+    coda.enqueue((xO, yO))
+    visitati.add((xO, yO))
+
+    direzioni <- ['N', 'S', 'E', 'O', 'NE', 'NO', 'SE', 'SO']
+
+    while not coda.isEmpty() then
+        x, y <- coda.dequeue()
+
+        if x == xD and y == yD then
+            break
+
+        for direzione in direzioni then
+            risultato <- mossa(gridMap, x, y, direzione)
+
+            if tipo(risultato) == tuple then
+                nx, ny <- risultato
+
+                if (nx, ny) not in visitati then
+                    coda.enqueue((nx, ny))
+                    visitati.add((nx, ny))
+                    predecessori[(nx, ny)] <- (x, y)
+
+    if (xD, yD) not in predecessori then
+        return []
+
+    cammino = []
+    cella = (xD, yD)
+
+    while cella != (xO, yO) then
+        cammino.append(cella)
+        cella <- predecessori[cella]
+
+    cammino.append((xO, yO))
+    cammino.reverse()
+
+    return cammino
+}
+
+camminoTipo1(gridMap, xO, yO, xD, yD){
+    """
+    gridMap rappresenta la matrice della griglia.
+    xO, yO rappresentano le coordinate della cella di origine.
+    xD, yD rappresentano le coordinate della cella di destinazione.
+
+    Ritorna la lista di celle se esiste un cammino di tipo 1, altrimenti [].
+    """
+
+    if isMuro(gridMap, xO, yO) or isMuro(gridMap, xD, yD) then
+        return []
+
+    diagonali = ['NE', 'NO', 'SE', 'SO']
+
+    for prima_direzione in diagonali then
+        cammino <- [(xO, yO)]
+        x, y <- xO, yO
+
+        while True then
+            risultato <- mossa(gridMap, x, y, prima_direzione)
+            if tipo(risultato) != tuple then
+                break
+
+            nx, ny <- risultato
+            if isMuro(gridMap, nx, ny) then
+                break
+
+            cammino.append((nx, ny))
+            x, y <- nx, ny
+
+            if (x == xD or y == yD) then
+                direzione_linea <- calcolaDirezioneLineare(x, y, xD, yD)
+                if direzione_linea is None then
+                    continue
+
+                cammino_lineare <- []
+                cx, cy <- x, y
+
+                while (cx, cy) != (xD, yD) then
+                    risultato2 <- mossa(gridMap, cx, cy, direzione_linea)
+                    if tipo(risultato2) != tuple then
+                        break
+
+                    nx2, ny2 <- risultato2
+                    if isMuro(gridMap, nx2, ny2) then
+                        break
+
+                    cammino_lineare.append((nx2, ny2))
+                    cx, cy <- nx2, ny2
+
+                if (cx, cy) == (xD, yD) then
+                    return cammino + cammino_lineare
+
+    return []
+}
+
+camminoTipo2(gridMap, xO, yO, xD, yD){
+    """
+    gridMap rappresenta la matrice della griglia.
+    xO, yO rappreentano le coordinate della cella di origine.
+    xD, yD rappresentano le coordinate della cella di destinazione.
+
+    Ritorna se esiste un cammino valido, altrimenti [].
+    """
+
+    if isMuro(gridMap, xO, yO) or isMuro(gridMap, xD, yD) then
+        return []
+
+    direzioni_lineari <- ['N', 'S', 'E', 'O']
+    direzioni_diagonali <- ['NE', 'NO', 'SE', 'SO']
+
+    for prima_dir in direzioni_lineari then
+        cammino <- [(xO, yO)]
+        x, y <- xO, yO
+
+        while True then
+            risultato <- mossa(gridMap, x, y, prima_dir)
+            if tipo(risultato) != tuple then
+                break
+
+            nx, ny <- risultato
+            if isMuro(gridMap, nx, ny) then
+                break
+
+            cammino.append((nx, ny))
+            x, y <- nx, ny
+
+            direzione_diag <- calcolaDirezioneDiagonale(x, y, xD, yD)
+            if direzione_diag is None then
+                continue
+
+            cammino_diag <- []
+            cx, cy <- x, y
+
+            while (cx, cy) != (xD, yD) then
+                risultato2 <- mossa(gridMap, cx, cy, direzione_diag)
+                if tipo(risultato2) != tuple then
+                    break
+
+                nx2, ny2 <- risultato2
+                if isMuro(gridMap, nx2, ny2) then
+                    break
+
+                cammino_diag.append((nx2, ny2))
+                cx, cy <- nx2, ny2
+
+            if (cx, cy) == (xD, yD) then
+                return cammino + cammino_diag
+
+    return []
+}
+
+camminoMinimo(gridMap, xO, yO, xD, yD){
+    """
+    Ritorna il cammino minimo, oppure [] se non esiste.
+    """
+
+    if isMuro(gridMap, xO, yO) or isMuro(gridMap, xD, yD) then
+        return []
+
+    # Priority queue: (distanza_accumulata, x, y)
+    coda <- PriorityQueue()
+    coda.enqueue((0, xO, yO))
+
+    visitati <- set()
+    distanza <- dict()
+    predecessori <- dict()
+
+    distanza[(xO, yO)] <- 0
+
+    direzioni <- ['N', 'S', 'E', 'O', 'NE', 'NO', 'SE', 'SO']
+
+    while not coda.isEmpty() then
+        dist_corrente, x, y <- coda.dequeue()
+
+        if (x, y) in visitati then
+            continue
+        visitati.add((x, y))
+
+        if (x, y) == (xD, yD) then
+            break
+
+        for direzione in direzioni then
+            risultato <- mossa(gridMap, x, y, direzione)
+
+            if tipo(risultato) == tuple then
+                nx, ny <- risultato
+                if (nx, ny) in visitati or isMuro(gridMap, nx, ny) then
+                    continue
+
+                costo <- calcolaDistanzaMossa(direzione)
+                nuova_distanza <- dist_corrente + costo
+
+                if (nx, ny) not in distanza or nuova_distanza < distanza[(nx, ny)] then
+                    distanza[(nx, ny)] <- nuova_distanza
+                    predecessori[(nx, ny)] <- (x, y)
+                    coda.enqueue((nuova_distanza, nx, ny))
+
+    if (xD, yD) not in predecessori then
+        return []
+
+    cammino <- []
+    cella <- (xD, yD)
+
+    while cella != (xO, yO) then
+        cammino.append(cella)
+        cella <- predecessori[cella]
+
+    cammino.append((xO, yO))
+    cammino.reverse()
+
+    return cammino
+}
+
+definisciQuadranti(gridMap, rO, cO){
+    """
+    Data una griglia e un punto di origine (rO, cO),
+    classifica tutti gli ostacoli (celle con valore 1) nei quattro quadranti standard.
+    Gli ostacoli sugli assi non appartengono a nessun quadrante.
+
+    Convenzione dei quadranti:
+        I   : in alto a destra
+        II  : in alto a sinistra
+        III : in basso a sinistra
+        IV  : in basso a destra
+
+    Ritorna quattro liste: [ostacoli_Q1, ostacoli_Q2, ostacoli_Q3, ostacoli_Q4] ciascuna contenente coordinate (r, c) degli ostacoli.
+    """
+
+    righe <- numeroRighe(gridMap)
+    colonne <- numeroColonne(gridMap)
+
+    Q1 = []  # Primo quadrante
+    Q2 = []  # Secondo quadrante
+    Q3 = []  # Terzo quadrante
+    Q4 = []  # Quarto quadrante
+
+    for r in range(0, righe) then
+        for c in range(0, colonne) then
+
+            if gridMap[r][c] != 1 then
+                continua
+
+            # Quadrante I: sopra e a destra dell'origine
+            if r < rO and c > cO then
+                Q1.aggiungi((r, c))
+
+            # Quadrante II: sopra e a sinistra dell'origine
+            elif r < rO and c < cO then
+                Q2.aggiungi((r, c))
+
+            # Quadrante III: sotto e a sinistra dell'origine
+            elif r > rO and c < cO then
+                Q3.aggiungi((r, c))
+
+            # Quadrante IV: sotto e a destra dell'origine
+            elif r > rO and c > cO then
+                Q4.aggiungi((r, c))
+
+    return Q1, Q2, Q3, Q4
+}
+
+isRegionFree(gridMap, xO, yO, xD, yD){
+    """
+    Verifica se l'intera regione rettangolare delimitata dalle coordinate
+    di origine e destinazione è libera da ostacoli (celle con valore 1).
+
+    Ritorna True  se la regione è priva di ostacoli, False se almeno una cella nella regione contiene un ostacolo.
+    """
+
+    minX <- min(xO, xD)
+    maxX <- max(xO, xD)
+    minY <- min(yO, yD)
+    maxY <- max(yO, yD)
+
+    for x in range(minX, maxX + 1) then
+        for y in range(minY, maxY + 1) then
+            if gridMap[x][y] == 1 then
+                return False  # Ostacolo trovato
+
+    return True  # Nessun ostacolo
+}
