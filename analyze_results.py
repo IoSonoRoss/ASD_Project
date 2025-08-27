@@ -5,14 +5,7 @@ import glob
 import numpy as np
 import ast
 import math
-
-def calcola_distanza_libera(origin, destination):
-    """Calcola la distanza libera tra due punti."""
-    if not origin or not destination: return float('inf')
-    delta_x = abs(origin[1] - destination[1])
-    delta_y = abs(origin[0] - destination[0])
-    delta_min, delta_max = min(delta_x, delta_y), max(delta_x, delta_y)
-    return math.sqrt(2) * delta_min + (delta_max - delta_min)
+import path_logic
 
 def load_and_combine_data(data_directory="experiment_data"):
     """
@@ -45,7 +38,7 @@ def analyze_and_plot(df):
     if 'destination' in df.columns:
         df['destination'] = df['destination'].apply(lambda x: ast.literal_eval(str(x)))
     if 'origin' in df.columns and 'destination' in df.columns:
-        df['dlib'] = df.apply(lambda row: calcola_distanza_libera(row['origin'], row['destination']), axis=1)
+        df['dlib'] = df.apply(lambda row: path_logic.calcola_distanza_libera(row['origin'], row['destination']), axis=1)
 
     if 'correttezza_superata' in df.columns:
         num_inconsistent = len(df[df['correttezza_superata'] == False])
