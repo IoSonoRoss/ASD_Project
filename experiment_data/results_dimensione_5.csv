@@ -1,0 +1,6 @@
+rows,cols,obstacle_ratio,num_runs,id_scenario,run_num,origin,destination,lunghezza_OD,execution_time_OD,recursive_calls_OD,cache_hits_OD,total_unique_frontiers_OD,pruning_successes_OD,max_recursion_depth_OD,lunghezza_DO,execution_time_DO,recursive_calls_DO,cache_hits_DO,total_unique_frontiers_DO,pruning_successes_DO,max_recursion_depth_DO,correttezza_superata
+15,15,0.2,5,dimensione_5,1,"(2, 6)","(12, 14)",13.313708498984761,0.00216299993917346,2,0,37,36,2,13.313708498984761,0.007556000025942922,7,0,24,18,2,True
+15,15,0.2,5,dimensione_5,2,"(1, 6)","(14, 13)",16.727922061357855,0.03734770021401346,42,8,62,61,5,16.727922061357855,2.02245599986054,1890,128,138,1529,15,True
+15,15,0.2,5,dimensione_5,3,"(7, 3)","(10, 13)",12.071067811865476,0.061834000051021576,60,6,99,146,7,12.071067811865474,0.08469010004773736,92,16,113,174,6,True
+15,15,0.2,5,dimensione_5,4,"(2, 5)","(13, 10)",13.071067811865476,0.0009842000436037779,1,0,0,0,1,13.071067811865476,0.0012002000585198402,1,0,0,0,1,True
+15,15,0.2,5,dimensione_5,5,"(3, 5)","(13, 13)",13.899494936611665,0.038245500065386295,35,2,62,64,5,13.899494936611667,0.00915789999999106,8,0,30,23,3,True
